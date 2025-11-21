@@ -9,6 +9,7 @@ ConnectDB();
 
 app.use("/api/auth", require("./routes/AuthRoutes"));
 app.use("/api/expos", require("./routes/ExpoRoutes"));
+app.use("/api/booths", require("./routes/BoothRoutes"));
 app.use("/api/exhibitors", require("./routes/ExhibitorRoutes"));
 app.use("/api/attendees", require("./routes/AttendeeRoutes"));
 app.use("/api/schedule", require("./routes/ScheduleRoutes"));

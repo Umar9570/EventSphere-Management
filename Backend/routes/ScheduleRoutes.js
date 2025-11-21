@@ -1,20 +1,17 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ScheduleController = require('../controllers/ScheduleController');
+const ScheduleController = require("../controllers/ScheduleController");
 
-// Create schedule/session
-router.post('/', ScheduleController.createSchedule);
+// Get all sessions
+router.get("/", ScheduleController.getAllSchedules);
 
-// Update schedule
-router.put('/:id', ScheduleController.updateSchedule);
+// Create a new session
+router.post("/", ScheduleController.createSchedule);
 
-// Delete schedule
-router.delete('/:id', ScheduleController.deleteSchedule);
+// Update a session
+router.put("/:id", ScheduleController.updateSchedule);
 
-// Get schedules by expo
-router.get('/expo/:expoId', ScheduleController.getSchedulesByExpo);
-
-// Get single schedule
-router.get('/:id', ScheduleController.getScheduleById);
+// Delete a session
+router.delete("/:id", ScheduleController.deleteSchedule);
 
 module.exports = router;
