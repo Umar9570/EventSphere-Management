@@ -12,6 +12,8 @@ import ManageExpos from "../pages/admin/ManageExpos";
 import ManageBooths from "../pages/admin/ManageBooths";
 import ManageSchedule from "../pages/admin/ManageSchedule";
 import Attendance from "../pages/admin/Attendance";
+import MyBooth from "../pages/exhibitor/MyBooth";
+import ExhibitorSchedule from "../pages/exhibitor/Schedule";
 
 const AppRoutes = () => (
   <Routes>
@@ -36,7 +38,7 @@ const AppRoutes = () => (
       <Route
         path="dashboard"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -44,7 +46,7 @@ const AppRoutes = () => (
       <Route
         path="attendees"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <ManageAttendees />
           </ProtectedRoute>
         }
@@ -52,7 +54,7 @@ const AppRoutes = () => (
       <Route
         path="exhibitors"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <ManageExhibitors />
           </ProtectedRoute>
         }
@@ -60,7 +62,7 @@ const AppRoutes = () => (
       <Route
         path="expos"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <ManageExpos />
           </ProtectedRoute>
         }
@@ -68,7 +70,7 @@ const AppRoutes = () => (
       <Route
         path="booths"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <ManageBooths />
           </ProtectedRoute>
         }
@@ -76,7 +78,7 @@ const AppRoutes = () => (
       <Route
         path="schedule"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <ManageSchedule />
           </ProtectedRoute>
         }
@@ -84,8 +86,27 @@ const AppRoutes = () => (
       <Route
         path="attendance"
         element={
-          <ProtectedRoute roles={["exhibitor"]}>
+          <ProtectedRoute roles={["organizer"]}>
             <Attendance />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Exhibitors */}
+
+      <Route
+        path="mybooth"
+        element={
+          <ProtectedRoute roles={["exhibitor"]}>
+            <MyBooth />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="exhibitor-schedule"
+        element={
+          <ProtectedRoute roles={["exhibitor"]}>
+            <ExhibitorSchedule />
           </ProtectedRoute>
         }
       />

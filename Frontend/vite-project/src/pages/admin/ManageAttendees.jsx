@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Badge,
     Card,
@@ -9,19 +9,15 @@ import {
     Form,
     Spinner,
 } from "react-bootstrap";
-import { AuthContext } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { toast } from "react-toastify";
 
 const ManageAttendees = () => {
-    const { user: currentUser } = useContext(AuthContext);
     const [attendees, setAttendees] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Edit modal
     const [showEditModal, setShowEditModal] = useState(false);
     const [currentAttendee, setCurrentAttendee] = useState(null);
-
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -29,25 +25,28 @@ const ManageAttendees = () => {
         phone: "",
     });
 
-    // Delete modal
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [attendeeToDelete, setAttendeeToDelete] = useState(null);
 
-    // ------------------ FETCH ALL ATTENDEES ------------------
+    // ------------------ FETCH ALL ------------------
     const fetchAttendees = async () => {
         try {
             setLoading(true);
             const { data } = await api.get("/attendees");
 
-            // Normalize
-            const normalized = data.map((a) => ({
-                ...a,
-                _id: a._id || a.id,
+            const normalized = data.attendees.map((a) => ({
+                _id: a._id,
+                firstName: a.user?.firstName,
+                lastName: a.user?.lastName,
+                email: a.user?.email,
+                phone: a.user?.phone,
+                status: a.user?.status || "Not Attended",
+                createdAt: a.createdAt,
+                attendedEvents: a.attendedEvents || 0,
             }));
 
             setAttendees(normalized);
         } catch (err) {
-            console.error(err);
             toast.error("Failed to load attendees");
         } finally {
             setLoading(false);
@@ -58,45 +57,34 @@ const ManageAttendees = () => {
         fetchAttendees();
     }, []);
 
-    // ------------------ FORM HANDLERS ------------------
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // ------------------ OPEN EDIT MODAL ------------------
+    // ------------------ EDIT ------------------
     const openEditModal = (att) => {
         setCurrentAttendee(att);
-        setFormData({
-            firstName: att.firstName,
-            lastName: att.lastName,
-            email: att.email,
-            phone: att.phone,
-        });
+        setFormData(att);
         setShowEditModal(true);
     };
 
-    // ------------------ SUBMIT EDIT ------------------
     const handleEdit = async (e) => {
         e.preventDefault();
-        try {
-            const { _id } = currentAttendee;
-            const { data } = await api.put(`/attendees/${_id}`, formData);
 
-            if (data.status || data.success) {
+        try {
+            const { data } = await api.put(`/attendees/${currentAttendee._id}`, formData);
+
+            if (data.status) {
                 toast.success("Attendee updated");
                 setShowEditModal(false);
                 fetchAttendees();
-            } else {
-                toast.error(data.message || "Update failed");
             }
-        } catch (err) {
-            console.error(err);
-            toast.error("Server error while updating attendee");
+        } catch {
+            toast.error("Error updating attendee");
         }
     };
 
-    // ------------------ DELETE ATTENDEE ------------------
+    // ------------------ DELETE ------------------
     const openDeleteModal = (att) => {
         setAttendeeToDelete(att);
         setShowDeleteModal(true);
@@ -104,75 +92,58 @@ const ManageAttendees = () => {
 
     const handleDelete = async () => {
         try {
-            const { _id } = attendeeToDelete;
-            const { data } = await api.delete(`/attendees/${_id}`);
+            const { data } = await api.delete(`/attendees/${attendeeToDelete._id}`);
 
-            if (data.status || data.success) {
+            if (data.status) {
                 toast.success("Attendee deleted");
-                setShowDeleteModal(false);
                 fetchAttendees();
-            } else {
-                toast.error(data.message || "Delete failed");
             }
-        } catch (err) {
-            console.error(err);
-            toast.error("Server error while deleting attendee");
+        } catch {
+            toast.error("Error deleting attendee");
         }
+        setShowDeleteModal(false);
     };
 
-    // UI LOADING
     if (loading)
         return (
             <div className="text-center mt-5">
                 <Spinner animation="border" />
-                <p className="mt-2">Loading attendees...</p>
+                <p>Loading attendees...</p>
             </div>
         );
 
     return (
         <div className="p-4">
-            {/* Header */}
-            <div className="d-flex align-items-center justify-content-between mb-4">
-                <h4 className="fw-semibold text-secondary mb-0">All Attendees</h4>
-            </div>
+            <h4 className="fw-semibold mb-4">All Attendees</h4>
 
-            {/* Attendee Cards */}
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
                 {attendees.map((att) => (
                     <Col key={att._id}>
-                        <Card className="border-0 shadow-sm attendee-card h-100">
+                        <Card className="shadow-sm border-0 h-100 attendee-card">
                             <Card.Body>
-                                <div className="d-flex align-items-center justify-content-between mb-2">
-                                    <h6 className="fw-semibold mb-0 text-dark">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <h6 className="fw-bold">
                                         {att.firstName} {att.lastName}
                                     </h6>
 
-                                    <Badge
-                                        bg={att.status === "Attended" ? "success" : "secondary"}
-                                        className="status-badge"
-                                    >
+                                    <Badge bg={att.status === "Attended" ? "success" : "secondary"}>
                                         {att.status}
                                     </Badge>
                                 </div>
 
-                                <p className="mb-1 text-muted small">
-                                    <i className="bi bi-envelope me-2"></i>
+                                <p className="text-muted small mb-1">
+                                    <i className="bi bi-envelope me-1"></i>
                                     {att.email}
                                 </p>
 
-                                <p className="mb-1 text-muted small">
-                                    <i className="bi bi-telephone me-2"></i>
-                                    {att.phone || "N/A"}
+                                <p className="text-muted small mb-1">
+                                    <i className="bi bi-telephone me-1"></i>
+                                    {att.phone}
                                 </p>
 
-                                <p className="mb-2 text-muted small">
-                                    <i className="bi bi-calendar-event me-2"></i>
-                                    Joined: {new Date(att.createdAt).toLocaleDateString()}
-                                </p>
-
-                                <p className="mb-0 text-muted small">
-                                    <i className="bi bi-ticket-detailed me-2"></i>
-                                    Events Attended: {att.attendedEvents || 0}
+                                <p className="text-muted small mb-1">
+                                    <i className="bi bi-ticket-detailed me-1"></i>
+                                    Events Attended: {att.attendedEvents}
                                 </p>
 
                                 <div className="d-flex justify-content-end mt-3">
@@ -184,7 +155,6 @@ const ManageAttendees = () => {
                                     >
                                         <i className="bi bi-pencil"></i>
                                     </Button>
-
                                     <Button
                                         size="sm"
                                         variant="outline-danger"
@@ -198,110 +168,6 @@ const ManageAttendees = () => {
                     </Col>
                 ))}
             </Row>
-
-            {/* ------------------ EDIT MODAL ------------------ */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Attendee</Modal.Title>
-                </Modal.Header>
-
-                <Form onSubmit={handleEdit}>
-                    <Modal.Body>
-                        <Row>
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>First Name</Form.Label>
-                                <Form.Control
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>Last Name</Form.Label>
-                                <Form.Control
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                        </Row>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Email</Form.Label>
-                            <Form.Control
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Phone</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                            />
-                        </Form.Group>
-                    </Modal.Body>
-
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" variant="primary">
-                            Update Attendee
-                        </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-
-            {/* ------------------ DELETE MODAL ------------------ */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Delete Attendee</Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    Are you sure you want to delete{" "}
-                    <strong>
-                        {attendeeToDelete?.firstName} {attendeeToDelete?.lastName}
-                    </strong>{" "}
-                    ?
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancel
-                    </Button>
-                    <Button variant="danger" onClick={handleDelete}>
-                        Delete
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-
-            {/* Card Hover Styles */}
-            <style>{`
-        .attendee-card {
-          transition: transform 0.25s cubic-bezier(0.4,0,0.2,1),
-                      box-shadow 0.25s cubic-bezier(0.4,0,0.2,1);
-          border-radius: 14px;
-        }
-        .attendee-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        }
-        .status-badge {
-          font-size: 11px;
-          padding: 4px 8px;
-        }
-      `}</style>
         </div>
     );
 };

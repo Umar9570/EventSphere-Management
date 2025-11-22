@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
     Card,
     Button,
@@ -11,8 +11,11 @@ import {
     Badge,
 } from "react-bootstrap";
 import api from "../../api/axios";
+import { AuthContext } from "../../context/AuthContext"; // import AuthContext
 
 const ManageExpos = () => {
+    const { user } = useContext(AuthContext); // get logged-in user
+
     const [expos, setExpos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState("");
@@ -37,7 +40,7 @@ const ManageExpos = () => {
     const fetchExpos = async () => {
         try {
             setLoading(true);
-            const { data } = await api.get("/expo");
+            const { data } = await api.get("/expos");
 
             if (data.status) {
                 setExpos(data.expos);
@@ -60,10 +63,16 @@ const ManageExpos = () => {
     };
 
     // Add new expo
-    const handleAddExpo = async () => {
+    const handleAddExpo = async (e) => {
+        e.preventDefault();
         try {
             setSaving(true);
-            const { data } = await api.post("/expo", formData);
+
+            // include organizer from logged-in user
+            const { data } = await api.post("/expos", {
+                ...formData,
+                organizer: user?._id,
+            });
 
             if (data.status) {
                 setShowAddModal(false);
@@ -84,7 +93,7 @@ const ManageExpos = () => {
         }
     };
 
-    // Open edit modal with pre-filled data
+    // Open edit modal
     const openEditModal = (expo) => {
         setSelectedExpo(expo);
         setFormData({
@@ -101,7 +110,7 @@ const ManageExpos = () => {
     const handleUpdateExpo = async () => {
         try {
             setSaving(true);
-            const { data } = await api.put(`/expo/${selectedExpo._id}`, formData);
+            const { data } = await api.put(`/expos/${selectedExpo._id}`, formData);
 
             if (data.status) {
                 setShowEditModal(false);
@@ -121,7 +130,7 @@ const ManageExpos = () => {
 
         try {
             setDeletingId(id);
-            const { data } = await api.delete(`/expo/${id}`);
+            const { data } = await api.delete(`/expos/${id}`);
 
             if (data.status) {
                 setExpos((prev) => prev.filter((e) => e._id !== id));
@@ -165,7 +174,7 @@ const ManageExpos = () => {
                 </div>
             )}
 
-            {/* Empty State */}
+            {/* Empty */}
             {!loading && expos.length === 0 && (
                 <p className="text-center text-muted">No expos found.</p>
             )}
@@ -179,9 +188,7 @@ const ManageExpos = () => {
 
                                 <div className="d-flex justify-content-between">
                                     <h5 className="fw-bold text-dark">{expo.name}</h5>
-                                    <Badge bg="secondary">
-                                        {expo.location}
-                                    </Badge>
+                                    <Badge bg="secondary">{expo.location}</Badge>
                                 </div>
 
                                 <p className="text-muted mt-2 small">{expo.description}</p>
@@ -228,15 +235,15 @@ const ManageExpos = () => {
 
             {/* Styles */}
             <style>{`
-        .expo-card {
-          border-radius: 14px;
-          transition: all 0.25s ease;
-        }
-        .expo-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        }
-      `}</style>
+                .expo-card {
+                    border-radius: 14px;
+                    transition: all 0.25s ease;
+                }
+                .expo-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+                }
+            `}</style>
 
             {/* Add Expo Modal */}
             <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>

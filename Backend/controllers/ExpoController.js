@@ -1,30 +1,41 @@
 const ExpoModel = require("../models/ExpoSchema");
-const UserModel = require("../models/UserSchema");
 
+// ---------------- EXPO CONTROLLER ----------------
 const ExpoController = {
     // ---------------- CREATE EXPO (Organizer Only) ----------------
     createExpo: async (req, res) => {
         try {
-            const { title, date, location, description, theme, totalBooths } = req.body;
+            const { name, description, location, startDate, endDate } = req.body;
+
+            // Ensure required fields
+            if (!name || !location || !startDate || !endDate) {
+                return res.json({ message: "Required fields missing", status: false });
+            }
+
+            // Get organizer from request (set via frontend)
+            // Since you said no middleware/tokens, let's accept organizer from the request body
+            const organizer = req.body.organizer;
+            if (!organizer) {
+                return res.json({ message: "Organizer is required", status: false });
+            }
 
             const newExpo = await ExpoModel.create({
-                title,
-                date,
-                location,
+                name,
                 description,
-                theme,
-                totalBooths,
-                assignedBooths: 0,
+                location,
+                startDate,
+                endDate,
+                organizer,    // important!
             });
 
             res.json({
                 message: "Expo created successfully",
                 expo: newExpo,
-                status: true
+                status: true,
             });
-
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Create expo error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
     },
 
@@ -32,9 +43,13 @@ const ExpoController = {
     updateExpo: async (req, res) => {
         try {
             const { id } = req.params;
-            const updatedData = req.body;
+            const { name, description, location, startDate, endDate } = req.body;
 
-            const updatedExpo = await ExpoModel.findByIdAndUpdate(id, updatedData, { new: true });
+            const updatedExpo = await ExpoModel.findByIdAndUpdate(
+                id,
+                { name, description, location, startDate, endDate },
+                { new: true }
+            );
 
             if (!updatedExpo) {
                 return res.json({ message: "Expo not found", status: false });
@@ -43,11 +58,11 @@ const ExpoController = {
             res.json({
                 message: "Expo updated successfully",
                 expo: updatedExpo,
-                status: true
+                status: true,
             });
-
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Update expo error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
     },
 
@@ -65,11 +80,11 @@ const ExpoController = {
 
             res.json({
                 message: "Expo deleted successfully",
-                status: true
+                status: true,
             });
-
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Delete expo error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
     },
 
@@ -77,14 +92,10 @@ const ExpoController = {
     getAllExpos: async (req, res) => {
         try {
             const expos = await ExpoModel.find();
-
-            res.json({
-                expos,
-                status: true
-            });
-
+            res.json({ expos, status: true });
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Get all expos error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
     },
 
@@ -92,19 +103,16 @@ const ExpoController = {
     getExpoById: async (req, res) => {
         try {
             const { id } = req.params;
-
             const expo = await ExpoModel.findById(id);
+
             if (!expo) {
                 return res.json({ message: "Expo not found", status: false });
             }
 
-            res.json({
-                expo,
-                status: true
-            });
-
+            res.json({ expo, status: true });
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Get expo by ID error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
     },
 
@@ -122,23 +130,19 @@ const ExpoController = {
             if (assignedBooths > expo.totalBooths) {
                 return res.json({
                     message: "Assigned booths cannot exceed total booths",
-                    status: false
+                    status: false,
                 });
             }
 
             expo.assignedBooths = assignedBooths;
             await expo.save();
 
-            res.json({
-                message: "Booth count updated",
-                expo,
-                status: true
-            });
-
+            res.json({ message: "Booth count updated", expo, status: true });
         } catch (err) {
-            res.json({ message: err.message, status: false });
+            console.error("Update booth count error:", err);
+            res.status(500).json({ message: err.message, status: false });
         }
-    }
+    },
 };
 
 module.exports = ExpoController;

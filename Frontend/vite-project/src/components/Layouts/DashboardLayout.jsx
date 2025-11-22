@@ -1,11 +1,14 @@
 // src/components/layout/DashboardLayout.jsx
-import React, { useState, useEffect } from "react";
-import Sidebar from "../Navbars/Sidebar/Sidebar";
+import React, { useState, useEffect, useContext } from "react";
+import Sidebar from "../Navbars/Sidebar/Sidebar"; // Admin sidebar
+import ExhibitorSidebar from "../Navbars/Sidebar/ExhibitorSidebar"; // Exhibitor sidebar
 import Topbar from "../Navbars/Topbar/Topbar";
 import { Container } from "react-bootstrap";
 import { Outlet } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext"; // <-- import context
 
 const DashboardLayout = () => {
+  const { user } = useContext(AuthContext); // get user from context
   const [showMenu, setShowMenu] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1030);
 
@@ -24,15 +27,18 @@ const DashboardLayout = () => {
 
   const toggleMenu = () => setShowMenu(!showMenu);
 
+  // Decide which sidebar to show based on role
+  const SidebarComponent =
+    user?.role === "exhibitor" ? ExhibitorSidebar : Sidebar;
+
   return (
     <div className="dashboard-layout d-flex position-relative">
       {/* Sidebar */}
       <div
-        className={`sidebar-wrapper ${
-          showMenu ? "sidebar-open" : ""
-        } ${isMobile ? "sidebar-overlay" : "sidebar-desktop"}`}
+        className={`sidebar-wrapper ${showMenu ? "sidebar-open" : ""
+          } ${isMobile ? "sidebar-overlay" : "sidebar-desktop"}`}
       >
-        <Sidebar showMenu={showMenu} toggleMenu={toggleMenu} />
+        <SidebarComponent showMenu={showMenu} toggleMenu={toggleMenu} />
       </div>
 
       {/* Backdrop for overlay mode */}
@@ -52,7 +58,6 @@ const DashboardLayout = () => {
           marginLeft: !isMobile && showMenu ? "260px" : "0",
         }}
       >
-        {/* ✅ FIX: Pass correct prop name expected by Topbar */}
         <Topbar toggleSidebar={toggleMenu} />
 
         <Container fluid className="p-4 flex-grow-1">

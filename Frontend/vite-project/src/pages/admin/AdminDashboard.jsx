@@ -28,15 +28,15 @@ const AdminDashboard = () => {
             try {
                 // 1️⃣ Fetch expos
                 const { data: exposData } = await api.get("/expos");
-                const expos = exposData || [];
+                const expos = exposData.expos || [];
 
                 // 2️⃣ Fetch exhibitors
                 const { data: exhibitorsData } = await api.get("/exhibitors");
-                const exhibitors = exhibitorsData || [];
+                const exhibitors = exhibitorsData.exhibitors || [];
 
                 // 3️⃣ Fetch attendees
                 const { data: attendeesData } = await api.get("/attendees");
-                const attendees = attendeesData || [];
+                const attendees = attendeesData.attendees || [];
 
                 // 4️⃣ Compute attendees per month
                 const attendeesByMonth = {};
@@ -46,19 +46,20 @@ const AdminDashboard = () => {
                     });
                     attendeesByMonth[month] = (attendeesByMonth[month] || 0) + 1;
                 });
+
                 const chartDataFormatted = Object.entries(attendeesByMonth).map(
                     ([month, count]) => ({ month, count })
                 );
 
                 // 5️⃣ Recent activity
                 const recent = [
-                    ...expos.slice(-2).map((e) => `📢 New Expo created: ${e.title}`),
+                    ...expos.slice(-2).map((e) => `📢 New Expo created: ${e.name}`),
                     ...exhibitors.slice(-2).map(
                         (ex) => `🏢 Exhibitor registered: ${ex.companyName}`
                     ),
                     ...attendees.slice(-2).map(
                         (a) =>
-                            `🧍 New Attendee registered: ${a.firstName} ${a.lastName}`
+                            `🧍 New Attendee registered: ${a.user?.firstName} ${a.user?.lastName}`
                     ),
                 ];
 
@@ -196,7 +197,6 @@ const AdminDashboard = () => {
                     </Card>
                 </Col>
             </Row>
-
             {/* Inline styles */}
             <style>{`
         .stat-card {

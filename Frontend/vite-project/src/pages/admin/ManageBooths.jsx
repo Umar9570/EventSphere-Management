@@ -44,7 +44,7 @@ const ManageBooths = () => {
 
             const [boothRes, expoRes, exhibRes] = await Promise.all([
                 api.get("/booths"),
-                api.get("/expo"),
+                api.get("/expos"),
                 api.get("/exhibitors"),
             ]);
 

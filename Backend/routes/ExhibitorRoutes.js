@@ -1,26 +1,26 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ExhibitorController = require('../controllers/ExhibitorController');
+const ExhibitorController = require("../controllers/ExhibitorController");
 
-// Apply as exhibitor
-router.post('/apply', ExhibitorController.applyForExpo);
+// Apply for expo
+router.post("/apply", ExhibitorController.applyForExpo);
+
+// Get all exhibitor applications (pending, approved, rejected)
+router.get("/applications", ExhibitorController.getApplications);
+
+// Update application status (approve/reject)
+router.put("/:id/status", ExhibitorController.updateStatus);
 
 // Get all exhibitors
-router.get('/', ExhibitorController.getAllExhibitors);
+router.get("/", ExhibitorController.getAllExhibitors);
 
-// Get exhibitors by expo
-router.get('/expo/:expoId', ExhibitorController.getExhibitorsByExpo);
-
-// Approve exhibitor
-router.put('/approve/:id', ExhibitorController.approveExhibitor);
-
-// Reject exhibitor
-router.put('/reject/:id', ExhibitorController.rejectExhibitor);
+// Get exhibitors of a specific expo
+router.get("/expo/:expoId", ExhibitorController.getExhibitorsByExpo);
 
 // Assign booth
-router.put('/assign-booth/:id', ExhibitorController.assignBooth);
+router.put("/assign-booth/:id", ExhibitorController.assignBooth);
 
 // Update exhibitor profile
-router.put('/:id', ExhibitorController.updateExhibitorProfile);
+router.put("/:id", ExhibitorController.updateExhibitorProfile);
 
 module.exports = router;

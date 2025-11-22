@@ -3,86 +3,59 @@ const ExpoModel = require("../models/ExpoSchema");
 const UserModel = require("../models/UserSchema");
 
 const ExhibitorController = {
+
     // ---------------- APPLY AS EXHIBITOR ----------------
     applyForExpo: async (req, res) => {
         try {
-            const { userId, expoId, companyName, category, description } = req.body;
+            const { user, expo, organization, bio } = req.body;
 
-            // ensure expo exists
-            const expo = await ExpoModel.findById(expoId);
-            if (!expo) {
+            const expoExists = await ExpoModel.findById(expo);
+            if (!expoExists)
                 return res.json({ message: "Expo not found", status: false });
-            }
 
             const application = await ExhibitorModel.create({
-                userId,
-                expoId,
-                companyName,
-                category,
-                description,
-                status: "pending",
-                boothNumber: null
+                user,
+                expo,
+                organization,
+                bio,
+                status: "pending"
             });
 
-            res.json({
-                message: "Application submitted",
-                application,
-                status: true
-            });
+            res.json({ message: "Application submitted", application, status: true });
+
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
     },
 
-    // ---------------- GET ALL EXHIBITOR APPLICATIONS ----------------
-    getAllExhibitors: async (req, res) => {
+    // ---------------- GET PENDING OR ALL APPLICATIONS ----------------
+    getApplications: async (req, res) => {
         try {
             const exhibitors = await ExhibitorModel.find()
-                .populate("userId")
-                .populate("expoId");
+                .populate("user")
+                .populate("expo");
 
-            res.json({
-                exhibitors,
-                status: true
-            });
+            res.json({ exhibitors, status: true });
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
     },
 
-    // ---------------- GET EXHIBITORS FOR A SPECIFIC EXPO ----------------
-    getExhibitorsByExpo: async (req, res) => {
-        try {
-            const { expoId } = req.params;
-
-            const exhibitors = await ExhibitorModel.find({ expoId })
-                .populate("userId")
-                .populate("expoId");
-
-            res.json({
-                exhibitors,
-                status: true
-            });
-        } catch (err) {
-            res.json({ message: err.message, status: false });
-        }
-    },
-
-    // ---------------- APPROVE AN EXHIBITOR ----------------
-    approveExhibitor: async (req, res) => {
+    // ---------------- UPDATE STATUS (APPROVE/REJECT) ----------------
+    updateStatus: async (req, res) => {
         try {
             const { id } = req.params;
+            const { status } = req.body;
 
             const exhibitor = await ExhibitorModel.findById(id);
-            if (!exhibitor) {
+            if (!exhibitor)
                 return res.json({ message: "Exhibitor not found", status: false });
-            }
 
-            exhibitor.status = "approved";
+            exhibitor.status = status;
             await exhibitor.save();
 
             res.json({
-                message: "Exhibitor approved",
+                message: `Exhibitor ${status}`,
                 exhibitor,
                 status: true
             });
@@ -92,24 +65,27 @@ const ExhibitorController = {
         }
     },
 
-    // ---------------- REJECT AN EXHIBITOR ----------------
-    rejectExhibitor: async (req, res) => {
+    // ---------------- GET ALL EXHIBITORS ----------------
+    getAllExhibitors: async (req, res) => {
         try {
-            const { id } = req.params;
+            const exhibitors = await ExhibitorModel.find()
+                .populate("user")
+                .populate("expo");
 
-            const exhibitor = await ExhibitorModel.findById(id);
-            if (!exhibitor) {
-                return res.json({ message: "Exhibitor not found", status: false });
-            }
+            res.json({ exhibitors, status: true });
+        } catch (err) {
+            res.json({ message: err.message, status: false });
+        }
+    },
 
-            exhibitor.status = "rejected";
-            await exhibitor.save();
+    // ---------------- GET EXHIBITORS BY EXPO ----------------
+    getExhibitorsByExpo: async (req, res) => {
+        try {
+            const exhibitors = await ExhibitorModel.find({ expo: req.params.expoId })
+                .populate("user")
+                .populate("expo");
 
-            res.json({
-                message: "Exhibitor rejected",
-                status: true
-            });
-
+            res.json({ exhibitors, status: true });
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
@@ -118,30 +94,18 @@ const ExhibitorController = {
     // ---------------- ASSIGN BOOTH ----------------
     assignBooth: async (req, res) => {
         try {
-            const { id } = req.params; // exhibitor ID
+            const { id } = req.params;
             const { boothNumber } = req.body;
 
             const exhibitor = await ExhibitorModel.findById(id);
-            if (!exhibitor) {
+            if (!exhibitor)
                 return res.json({ message: "Exhibitor not found", status: false });
-            }
-
-            const expo = await ExpoModel.findById(exhibitor.expoId);
-            if (!expo) {
-                return res.json({ message: "Expo not found", status: false });
-            }
-
-            // check booth availability
-            if (boothNumber > expo.totalBooths) {
-                return res.json({ message: "Booth exceeds expo limit", status: false });
-            }
 
             exhibitor.boothNumber = boothNumber;
-            exhibitor.status = "approved"; // automatically approve after assigning booth
             await exhibitor.save();
 
             res.json({
-                message: "Booth assigned successfully",
+                message: "Booth assigned",
                 exhibitor,
                 status: true
             });
@@ -151,32 +115,24 @@ const ExhibitorController = {
         }
     },
 
-    // ---------------- UPDATE EXHIBITOR PROFILE ----------------
+    // ---------------- UPDATE PROFILE ----------------
     updateExhibitorProfile: async (req, res) => {
         try {
-            const { id } = req.params;
-            const updatedData = req.body;
-
             const exhibitor = await ExhibitorModel.findByIdAndUpdate(
-                id,
-                updatedData,
+                req.params.id,
+                req.body,
                 { new: true }
             );
 
-            if (!exhibitor) {
+            if (!exhibitor)
                 return res.json({ message: "Exhibitor not found", status: false });
-            }
 
-            res.json({
-                message: "Exhibitor profile updated",
-                exhibitor,
-                status: true
-            });
+            res.json({ message: "Profile updated", exhibitor, status: true });
 
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
-    },
+    }
 };
 
 module.exports = ExhibitorController;
