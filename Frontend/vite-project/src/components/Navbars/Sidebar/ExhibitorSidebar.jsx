@@ -58,6 +58,20 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
                     </li>
 
 
+                    {/* All Expos */}
+                    <li className="nav-item mb-1">
+                        <Link
+                            to="/all-expos"
+                            className={`nav-link d-flex align-items-center px-3 py-2 rounded ${location.pathname === "/all-expos"
+                                ? "active-link bg-light fw-semibold"
+                                : "text-secondary"
+                                }`}
+                            onClick={() => isMobile && handleToggle()}
+                        >
+                            <i className="bi bi-building me-2 nav-icon"></i>
+                            All Expos
+                        </Link>
+                    </li>
                     {/* Booth Management */}
                     <li className="nav-item mb-1">
                         <Link
@@ -68,7 +82,7 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
                                 }`}
                             onClick={() => isMobile && handleToggle()}
                         >
-                            <i className="bi bi-buildings me-2 nav-icon"></i>
+                            <i className="bi bi-shop-window me-2 nav-icon"></i>
                             My Booth
                         </Link>
                     </li>

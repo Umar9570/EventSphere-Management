@@ -16,7 +16,13 @@ const exhibitorSchema = new Schema(
       ref: "Expo"
     },
 
-    bio: { type: String }
+    bio: { type: String },
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending"
+    }
   },
   { timestamps: true }
 );

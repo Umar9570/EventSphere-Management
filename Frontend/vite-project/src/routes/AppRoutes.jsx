@@ -14,6 +14,7 @@ import ManageSchedule from "../pages/admin/ManageSchedule";
 import Attendance from "../pages/admin/Attendance";
 import MyBooth from "../pages/exhibitor/MyBooth";
 import ExhibitorSchedule from "../pages/exhibitor/Schedule";
+import AllExpos from "../pages/exhibitor/AllExpos";
 
 const AppRoutes = () => (
   <Routes>
@@ -107,6 +108,14 @@ const AppRoutes = () => (
         element={
           <ProtectedRoute roles={["exhibitor"]}>
             <ExhibitorSchedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="all-expos"
+        element={
+          <ProtectedRoute roles={["exhibitor"]}>
+            <AllExpos />
           </ProtectedRoute>
         }
       />

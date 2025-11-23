@@ -23,6 +23,7 @@ const ManageExhibitors = () => {
                     email: ex.user?.email || "N/A",
                     phone: ex.user?.phone || "N/A",
                     organization: ex.organization || "N/A",
+                    bio: ex.bio || "N/A",
                     boothNumber: ex.boothNumber || "Not Assigned",
                     expoName: ex.expo?.name || "Unknown Expo",
                     status: ex.status || "pending",
@@ -54,7 +55,7 @@ const ManageExhibitors = () => {
                     prev.map((ex) => (ex._id === id ? { ...ex, status } : ex))
                 );
             } else {
-                setErrorMessage("Failed to update status.");
+                setErrorMessage(data.message || "Failed to update status.");
             }
         } catch (err) {
             console.error(err);
@@ -145,6 +146,12 @@ const ManageExhibitors = () => {
                                 <p className="text-dark small mb-1">
                                     <i className="bi bi-building me-2"></i>
                                     Organization: {ex.organization}
+                                </p>
+
+                                {/* Bio */}
+                                <p className="text-muted small mb-1">
+                                    <i className="bi bi-person-lines-fill me-2"></i>
+                                    Bio: {ex.bio}
                                 </p>
 
                                 {/* Booth Number */}
