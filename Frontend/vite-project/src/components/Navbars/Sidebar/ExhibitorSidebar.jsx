@@ -101,6 +101,20 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
                             Schedule
                         </Link>
                     </li>
+
+                    <li className="nav-item mb-1">
+                        <Link
+                            to="/exhibitor-chat"
+                            className={`nav-link d-flex align-items-center px-3 py-2 rounded ${location.pathname === "/exhibitor-chat"
+                                ? "active-link bg-light fw-semibold"
+                                : "text-secondary"
+                                }`}
+                            onClick={() => isMobile && handleToggle()}
+                        >
+                            <i className="bi bi-chat me-2 nav-icon"></i>
+                            Chat
+                        </Link>
+                    </li>
                 </ul>
 
                 {/* Sidebar Footer */}

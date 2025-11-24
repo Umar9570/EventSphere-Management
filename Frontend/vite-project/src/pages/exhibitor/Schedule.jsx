@@ -1,25 +1,63 @@
 // src/pages/exhibitor/Schedule.jsx
-import React, { useEffect, useState } from "react";
-import { Card, Spinner, Table, Alert } from "react-bootstrap";
+import React, { useEffect, useState, useContext } from "react";
+import { Card, Spinner, Alert } from "react-bootstrap";
 import api from "../../api/axios";
+import { AuthContext } from "../../context/AuthContext";
 
 const ExhibitorSchedule = () => {
+    const { user } = useContext(AuthContext);
     const [schedule, setSchedule] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [fetchError, setFetchError] = useState("");
+    const [error, setError] = useState("");
 
     const fetchSchedule = async () => {
+        if (!user) return;
+
         try {
             setLoading(true);
-            const { data } = await api.get("/schedule"); // Admin schedule API
-            if (data.status) {
-                setSchedule(data.schedule);
-            } else {
-                setFetchError(data.message || "Failed to fetch schedule.");
+
+            // Get exhibitor profile
+            const exRes = await api.get(`/exhibitors/user/${user.id}`);
+            if (!exRes.data.status || !exRes.data.exhibitor) {
+                setSchedule([]);
+                return;
             }
+
+            const exhibitor = exRes.data.exhibitor;
+
+            if (exhibitor.status !== "approved") {
+                setError("You are not approved for any expo yet.");
+                setSchedule([]);
+                return;
+            }
+
+            if (!exhibitor.expo) {
+                setError("No expo assigned yet.");
+                setSchedule([]);
+                return;
+            }
+
+            const expoId = exhibitor.expo._id; // populated expo
+
+            // Fetch all schedules
+            const schRes = await api.get("/schedule");
+            if (!schRes.data.status) {
+                setError(schRes.data.message || "Failed to fetch schedule.");
+                setSchedule([]);
+                return;
+            }
+
+            // Filter schedules for this expo
+            const expoSchedule = schRes.data.schedule.filter(
+                (item) =>
+                    item.expo && String(item.expo._id) === String(expoId)
+            );
+
+            setSchedule(expoSchedule);
         } catch (err) {
             console.error(err);
-            setFetchError("Failed to fetch schedule.");
+            setError("Failed to fetch schedule.");
+            setSchedule([]);
         } finally {
             setLoading(false);
         }
@@ -27,7 +65,7 @@ const ExhibitorSchedule = () => {
 
     useEffect(() => {
         fetchSchedule();
-    }, []);
+    }, [user]);
 
     if (loading) {
         return (
@@ -40,66 +78,45 @@ const ExhibitorSchedule = () => {
 
     return (
         <div className="exhibitor-schedule">
-            <h4 className="fw-semibold text-secondary mb-4">Event Schedule</h4>
+            <h4 className="fw-semibold text-secondary mb-4">Expo Schedule</h4>
 
-            {fetchError && (
-                <Alert variant="danger" onClose={() => setFetchError("")} dismissible>
-                    {fetchError}
+            {error && (
+                <Alert variant="danger" onClose={() => setError("")} dismissible>
+                    {error}
                 </Alert>
             )}
 
-            {!schedule.length && !fetchError && (
+            {!schedule.length && !error && (
                 <p className="text-center text-muted">No schedule available.</p>
             )}
 
             {schedule.length > 0 && (
-                <Card className="shadow-sm border-0">
-                    <Card.Body>
-                        <Table striped bordered hover responsive className="mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Event</th>
-                                    <th>Location</th>
-                                    <th>Expo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {schedule.map((item) => (
-                                    <tr key={item._id}>
-                                        <td>
-                                            {new Date(item.startTime).toLocaleTimeString([], {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}{" "}
-                                            -{" "}
-                                            {new Date(item.endTime).toLocaleTimeString([], {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
-                                        </td>
-                                        <td>{item.title}</td>
-                                        <td>{item.location}</td>
-                                        <td>{item.expo?.name}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Card.Body>
-                </Card>
+                <div className="row g-4">
+                    {schedule.map((item) => (
+                        <div key={item._id} className="col-12 col-md-6 col-lg-4">
+                            <Card className="shadow-sm border-0 h-100">
+                                <Card.Body>
+                                    <h6 className="fw-semibold mb-1">{item.title}</h6>
+                                    {item.description && (
+                                        <p className="text-secondary small mb-2">{item.description}</p>
+                                    )}
+                                    <p className="text-muted small mb-0">
+                                        <strong>Date:</strong>{" "}
+                                        {new Date(item.date).toLocaleDateString()}
+                                    </p>
+                                    <p className="text-muted small mb-0">
+                                        <strong>Time:</strong> {item.startTime} - {item.endTime}
+                                    </p>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
             )}
 
-            {/* Inline styles */}
             <style>{`
-        .exhibitor-schedule h4 {
-          color: #0f172a;
-        }
-        .card {
-          border-radius: 14px;
-        }
-        table th, table td {
-          vertical-align: middle;
-        }
+        .exhibitor-schedule h4 { color: #0f172a; }
+        .card { border-radius: 14px; }
       `}</style>
         </div>
     );

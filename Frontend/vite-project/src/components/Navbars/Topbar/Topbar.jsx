@@ -59,7 +59,7 @@ const Topbar = ({ toggleSidebar, user }) => {
             className="navbar-brand fw-semibold text-dark mb-0"
             style={{ fontSize: "18px", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}
           >
-            LuxuryStay HMS
+            EventSphere
           </a>
         </div>
 
@@ -220,7 +220,8 @@ const Topbar = ({ toggleSidebar, user }) => {
           pointer-events: none;
         }
         .hover-danger:hover{
-          background-color: #7401013a !important;
+          background-color: #b600001c !important;
+          border-radius: 5px;
         }
       `}</style>
     </nav>

@@ -15,6 +15,7 @@ import Attendance from "../pages/admin/Attendance";
 import MyBooth from "../pages/exhibitor/MyBooth";
 import ExhibitorSchedule from "../pages/exhibitor/Schedule";
 import AllExpos from "../pages/exhibitor/AllExpos";
+import ExhibitorChat from "../pages/exhibitor/ExhibitorChat";
 
 const AppRoutes = () => (
   <Routes>
@@ -120,10 +121,10 @@ const AppRoutes = () => (
         }
       />
       <Route
-        path="apply"
+        path="exhibitor-chat"
         element={
           <ProtectedRoute roles={["exhibitor"]}>
-            <Index />
+            <ExhibitorChat />
           </ProtectedRoute>
         }
       />

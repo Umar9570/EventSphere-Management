@@ -4,6 +4,20 @@ const UserModel = require("../models/UserSchema");
 
 const ExhibitorController = {
 
+    getExhibitorByUser: async (req, res) => {
+        try {
+            const exhibitor = await ExhibitorModel.findOne({ user: req.params.userId })
+                .populate("expo");
+
+            if (!exhibitor)
+                return res.json({ message: "Exhibitor profile not found", status: false });
+
+            res.json({ exhibitor, status: true });
+        } catch (err) {
+            res.json({ message: err.message, status: false });
+        }
+    },
+
     // ---------------- APPLY AS EXHIBITOR ----------------
     applyForExpo: async (req, res) => {
         try {

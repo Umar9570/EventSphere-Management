@@ -1,6 +1,6 @@
 // src/pages/exhibitor/MyBooth.jsx
 import React, { useEffect, useState, useContext } from "react";
-import { Card, Spinner, Button, Form, Row, Col, Alert } from "react-bootstrap";
+import { Card, Spinner, Alert, Row, Col } from "react-bootstrap";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -8,30 +8,35 @@ const MyBooth = () => {
     const { user } = useContext(AuthContext);
     const [booth, setBooth] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
 
-    const [formData, setFormData] = useState({
-        boothNumber: "",
-        location: "",
-    });
-
-    // Fetch exhibitor's booth
     const fetchBooth = async () => {
         if (!user) return;
+
         try {
             setLoading(true);
-            const { data } = await api.get(`/booths/exhibitor/${user._id}`);
-            if (data.status && data.booth) {
-                setBooth(data.booth);
-                setFormData({
-                    boothNumber: data.booth.boothNumber,
-                    location: data.booth.location,
-                });
+
+            // First get exhibitor profile
+            const exRes = await api.get(`/exhibitors/user/${user.id}`);
+
+            if (!exRes.data.status || !exRes.data.exhibitor) {
+                setBooth(null);
+                return;
+            }
+
+            const exhibitorId = exRes.data.exhibitor._id;
+
+            // Now fetch booth assigned to this exhibitor
+            const boothRes = await api.get(`/booths/exhibitor/${exhibitorId}`);
+
+            if (boothRes.data.status && boothRes.data.booth) {
+                setBooth(boothRes.data.booth);
+            } else {
+                setBooth(null);
             }
         } catch (err) {
             console.error(err);
-            setError("Failed to fetch booth data.");
+            setError("Failed to load booth data.");
         } finally {
             setLoading(false);
         }
@@ -40,28 +45,6 @@ const MyBooth = () => {
     useEffect(() => {
         fetchBooth();
     }, [user]);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleUpdate = async () => {
-        try {
-            setSaving(true);
-            const { data } = await api.put(`/booths/${booth._id}`, formData);
-            if (data.status) {
-                setBooth(data.booth);
-                alert("Booth updated successfully!");
-            } else {
-                alert(data.message || "Failed to update booth.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Failed to update booth.");
-        } finally {
-            setSaving(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -73,7 +56,11 @@ const MyBooth = () => {
     }
 
     if (!booth) {
-        return <p className="text-center text-muted">You have not been assigned a booth yet.</p>;
+        return (
+            <p className="text-center text-muted">
+                You have not been assigned a booth yet.
+            </p>
+        );
     }
 
     return (
@@ -88,50 +75,42 @@ const MyBooth = () => {
 
             <Card className="shadow-sm border-0">
                 <Card.Body>
-                    <h5 className="fw-bold mb-3">{booth.expo?.name || "Expo Info"}</h5>
+                    <h5 className="fw-bold mb-3">
+                        {booth.expo?.name || "Expo Information"}
+                    </h5>
 
-                    <Form>
-                        <Row className="mb-3">
-                            <Col md={6}>
-                                <Form.Group>
-                                    <Form.Label>Booth Number</Form.Label>
-                                    <Form.Control
-                                        name="boothNumber"
-                                        value={formData.boothNumber}
-                                        onChange={handleChange}
-                                    />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group>
-                                    <Form.Label>Location</Form.Label>
-                                    <Form.Control
-                                        name="location"
-                                        value={formData.location}
-                                        onChange={handleChange}
-                                    />
-                                </Form.Group>
-                            </Col>
-                        </Row>
+                    <Row className="mb-2">
+                        <Col md={6}>
+                            <strong>Booth Number:</strong>
+                            <p>{booth.boothNumber || "-"}</p>
+                        </Col>
+                        <Col md={6}>
+                            <strong>Location:</strong>
+                            <p>{booth.location || "-"}</p>
+                        </Col>
+                    </Row>
 
-                        <div className="text-end">
-                            <Button variant="primary" onClick={handleUpdate} disabled={saving}>
-                                {saving ? <Spinner size="sm" animation="border" /> : "Update Booth"}
-                            </Button>
-                        </div>
-                    </Form>
+                    <Row className="mb-2">
+                        <Col md={6}>
+                            <strong>Expo Location:</strong>
+                            <p>{booth.expo?.location || "-"}</p>
+                        </Col>
+                        <Col md={6}>
+                            <strong>Expo Dates:</strong>
+                            <p>
+                                {booth.expo
+                                    ? `${new Date(booth.expo.startDate).toLocaleDateString()} - ${new Date(booth.expo.endDate).toLocaleDateString()}`
+                                    : "-"}
+                            </p>
+                        </Col>
+                    </Row>
                 </Card.Body>
             </Card>
 
-            {/* Inline styles */}
             <style>{`
-        .my-booth-page h4 {
-          color: #0f172a;
-        }
-        .card {
-          border-radius: 14px;
-        }
-      `}</style>
+                .my-booth-page h4 { color: #0f172a; }
+                .card { border-radius: 14px; }
+            `}</style>
         </div>
     );
 };

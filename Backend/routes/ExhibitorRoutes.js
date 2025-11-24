@@ -14,6 +14,8 @@ router.put("/:id/status", ExhibitorController.updateStatus);
 // Get all exhibitors
 router.get("/", ExhibitorController.getAllExhibitors);
 
+router.get("/user/:userId", ExhibitorController.getExhibitorByUser);
+
 // Get exhibitors of a specific expo
 router.get("/expo/:expoId", ExhibitorController.getExhibitorsByExpo);
 

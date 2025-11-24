@@ -37,6 +37,23 @@ const BoothController = {
         }
     },
 
+    getBoothByExhibitor: async (req, res) => {
+    try {
+        const { exhibitorId } = req.params;
+        const booth = await Booth.findOne({ assignedTo: exhibitorId })
+            .populate("expo", "name location startDate endDate");
+
+        if (!booth) {
+            return res.json({ status: true, booth: null });
+        }
+
+        res.json({ status: true, booth });
+    } catch (error) {
+        console.error("Get booth by exhibitor error:", error);
+        res.status(500).json({ status: false, message: "Server error" });
+    }
+},
+
     // ----------------------------------------------------
     // CREATE BOOTH
     // ----------------------------------------------------

@@ -8,6 +8,8 @@ router.get("/", BoothController.getAllBooths);
 // Get booths by Expo
 router.get("/expo/:expoId", BoothController.getBoothsByExpo);
 
+router.get("/exhibitor/:exhibitorId", BoothController.getBoothByExhibitor);
+
 // Create booth
 router.post("/", BoothController.createBooth);
 
