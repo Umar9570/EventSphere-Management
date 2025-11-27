@@ -1,4 +1,5 @@
 const ExpoModel = require("../models/ExpoSchema");
+const ExhibitorModel = require("../models/ExhibitorSchema");
 
 // ---------------- EXPO CONTROLLER ----------------
 const ExpoController = {
@@ -143,6 +144,32 @@ const ExpoController = {
             res.status(500).json({ message: err.message, status: false });
         }
     },
+
+    // ---------------- GET APPROVED EXPO FOR EXHIBITOR ----------------
+    getApprovedExpo: async (req, res) => {
+        try {
+            const { userId } = req.params;
+
+            // Find the exhibitor by userId
+            const exhibitor = await ExhibitorModel.findOne({ user: userId, status: "approved" })
+                .populate("expo"); // populate the expo details
+
+            if (!exhibitor || !exhibitor.expo) {
+                return res.json({
+                    message: "No approved expo found for this exhibitor",
+                    status: false
+                });
+            }
+
+            res.json({
+                expo: exhibitor.expo,
+                status: true
+            });
+        } catch (err) {
+            console.error("Get approved expo error:", err);
+            res.status(500).json({ message: err.message, status: false });
+        }
+    }
 };
 
 module.exports = ExpoController;

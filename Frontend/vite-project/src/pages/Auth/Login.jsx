@@ -21,7 +21,7 @@ const Login = () => {
     if (res.status) {
       toast.success('Login successful');
       if (res.user.role === 'organizer') navigate('/dashboard');
-      else if (res.user.role === 'exhibitor') navigate('/apply');
+      else if (res.user.role === 'exhibitor') navigate('/all-expos');
       else navigate('/home');
     } else {
       toast.error(res.message);
@@ -91,6 +91,7 @@ const Login = () => {
               <label>Email</label>
               <input
                 type="email"
+                name='email'
                 className="form-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

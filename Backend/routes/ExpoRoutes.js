@@ -11,6 +11,7 @@ router.put('/:id', ExpoController.updateExpo);
 // Delete expo
 router.delete('/:id', ExpoController.deleteExpo);
 
+router.get('/approved-expo/:userId', ExpoController.getApprovedExpo);
 // Get all expos
 router.get('/', ExpoController.getAllExpos);
 
@@ -19,5 +20,6 @@ router.get('/:id', ExpoController.getExpoById);
 
 // Update booth count
 router.put('/:id/booths', ExpoController.updateBoothCount);
+
 
 module.exports = router;

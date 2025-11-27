@@ -16,6 +16,8 @@ import MyBooth from "../pages/exhibitor/MyBooth";
 import ExhibitorSchedule from "../pages/exhibitor/Schedule";
 import AllExpos from "../pages/exhibitor/AllExpos";
 import ExhibitorChat from "../pages/exhibitor/ExhibitorChat";
+import { AuthContext } from "../context/AuthContext"; // <-- import context
+
 
 const AppRoutes = () => (
   <Routes>
@@ -121,10 +123,10 @@ const AppRoutes = () => (
         }
       />
       <Route
-        path="exhibitor-chat"
+        path="exhibitor-chat/:expoId"
         element={
           <ProtectedRoute roles={["exhibitor"]}>
-            <ExhibitorChat />
+            <ExhibitorChat/> 
           </ProtectedRoute>
         }
       />

@@ -1,12 +1,51 @@
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "simplebar-react/dist/simplebar.min.css";
+import { AuthContext } from "../../../context/AuthContext";
+import api from '../../../api/axios';
+
+
+const EXHIBITOR_ROUTE = 'exhibitor-chat';
 
 const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
     const location = useLocation();
     const isMobile = useMediaQuery({ maxWidth: 767 });
+    const { user } = useContext(AuthContext);
+
+    // Initialize with null to signify loading state
+    const [currentExpoId, setCurrentExpoId] = useState(null);
+
+    // Get the user's ID from context
+    const userId = user?.id;
+
+    // --- Fetch Expo ID on load ---
+    useEffect(() => {
+        if (userId && user?.role === 'exhibitor') {
+            const fetchApprovedExpo = async () => {
+                try {
+                    // Use the new API endpoint
+                    const response = await api.get(`/expos/approved-expo/${userId}`);
+
+                    if (response.data.status && response.data.expo) {
+                        // Set the ID from the fetched expo object
+                        setCurrentExpoId(response.data.expo._id);
+                    } else {
+                        // Handle case where no approved expo is found
+                        setCurrentExpoId('no-expo-selected');
+                    }
+                } catch (error) {
+                    console.error("Error fetching approved expo ID:", error);
+                    setCurrentExpoId('no-expo-selected');
+                }
+            };
+            fetchApprovedExpo();
+        } else {
+            // Default if user/role is missing or not an exhibitor
+            setCurrentExpoId('no-expo-selected');
+        }
+    }, [userId, user?.role]); // Re-run when userId or role changes
 
     const [localShow, setLocalShow] = useState(true);
     const isVisible = showMenu !== undefined ? showMenu : localShow;
@@ -19,6 +58,16 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
     const toggleDropdown = (menu) => {
         setOpenDropdown(openDropdown === menu ? "" : menu);
     };
+
+    // --- Derived State for Chat Link ---
+    // isChatEnabled is true only if a valid ID (not null, not the placeholder) is found
+    const isChatEnabled = currentExpoId !== null && currentExpoId !== 'no-expo-selected';
+    // The path is the real path or '#' (a safe no-op)
+    const chatPath = isChatEnabled ? `/${EXHIBITOR_ROUTE}/${currentExpoId}` : '#';
+    // Loading state is true only when currentExpoId is still null
+    const isLoading = currentExpoId === null;
+    // Check if the current location is any chat path
+    const isChatActive = location.pathname.includes(`/${EXHIBITOR_ROUTE}`);
 
     return (
         <>
@@ -102,17 +151,29 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
                         </Link>
                     </li>
 
+                    {/* Chat (Updated Logic) */}
                     <li className="nav-item mb-1">
                         <Link
-                            to="/exhibitor-chat"
-                            className={`nav-link d-flex align-items-center px-3 py-2 rounded ${location.pathname === "/exhibitor-chat"
-                                ? "active-link bg-light fw-semibold"
-                                : "text-secondary"
-                                }`}
-                            onClick={() => isMobile && handleToggle()}
+                            // Use the conditional chatPath: either the real URL or '#'
+                            to={chatPath}
+                            onClick={(e) => {
+                                // Prevent default navigation if chat is not enabled
+                                if (!isChatEnabled) {
+                                    e.preventDefault();
+                                    if (!isLoading) {
+                                        console.log("Chat is disabled: Exhibitor is not approved for an expo.");
+                                    }
+                                }
+                                if (isMobile) handleToggle();
+                            }}
+                            className={`nav-link d-flex align-items-center px-3 py-2 rounded ${isChatActive
+                                    ? "active-link bg-light fw-semibold"
+                                    : "text-secondary"
+                                } ${!isChatEnabled ? 'disabled-link' : ''}`} // Apply disabled class if not enabled
                         >
                             <i className="bi bi-chat me-2 nav-icon"></i>
-                            Chat
+                            {/* Dynamic Text to show status */}
+                            Chat {isLoading ? "(Loading...)" : isChatEnabled ? "" : "(Not Approved)"}
                         </Link>
                     </li>
                 </ul>
@@ -185,6 +246,15 @@ const ExhibitorSidebar = ({ showMenu, toggleMenu }) => {
         }
         .sidebar-toggler:hover {
           background-color: #d1d4d8ff;
+        }
+        /* New styles for disabled link */
+        .disabled-link {
+            opacity: 0.6; 
+            pointer-events: none; /* Prevents clicks on the link entirely */
+            cursor: not-allowed !important;
+        }
+        .disabled-link:hover {
+             background-color: #dfdfdf36 !important; /* Retain default background when disabled */
         }
       `}</style>
         </>
