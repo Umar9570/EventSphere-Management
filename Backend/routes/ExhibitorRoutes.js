@@ -19,6 +19,8 @@ router.get("/user/:userId", ExhibitorController.getExhibitorByUser);
 // Get exhibitors of a specific expo
 router.get("/expo/:expoId", ExhibitorController.getExhibitorsByExpo);
 
+router.get("/all-for-organizer/:userId", ExhibitorController.getAllParticipantsForOrganizer);
+
 // Assign booth
 router.put("/assign-booth/:id", ExhibitorController.assignBooth);
 

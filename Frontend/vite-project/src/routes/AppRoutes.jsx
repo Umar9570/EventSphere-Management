@@ -17,6 +17,7 @@ import ExhibitorSchedule from "../pages/exhibitor/Schedule";
 import AllExpos from "../pages/exhibitor/AllExpos";
 import ExhibitorChat from "../pages/exhibitor/ExhibitorChat";
 import { AuthContext } from "../context/AuthContext"; // <-- import context
+import OrganizerChat from "../pages/admin/OrganizerChat";
 
 
 const AppRoutes = () => (
@@ -127,6 +128,14 @@ const AppRoutes = () => (
         element={
           <ProtectedRoute roles={["exhibitor"]}>
             <ExhibitorChat/> 
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="chat"
+        element={
+          <ProtectedRoute roles={["organizer"]}>
+            <OrganizerChat/> 
           </ProtectedRoute>
         }
       />

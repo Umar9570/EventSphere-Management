@@ -105,6 +105,28 @@ const ExhibitorController = {
         }
     },
 
+    // ---------------- GET ALL CHAT PARTICIPANTS FOR ORGANIZER ----------------
+    getAllParticipantsForOrganizer: async (req, res) => {
+        try {
+            // Get all organizers except current
+            const organizers = await UserModel.find({ role: "organizer", _id: { $ne: req.params.userId } });
+
+            // Get all approved exhibitors
+            const exhibitors = await ExhibitorModel.find({ status: "approved" })
+                .populate("user");
+
+            // Merge users
+            const participants = [
+                ...organizers,
+                ...exhibitors.map(ex => ex.user)
+            ];
+
+            res.json({ participants, status: true });
+        } catch (err) {
+            res.json({ message: err.message, status: false });
+        }
+    },
+
     // ---------------- ASSIGN BOOTH ----------------
     assignBooth: async (req, res) => {
         try {

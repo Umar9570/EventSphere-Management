@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Collapse, Badge } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "simplebar-react/dist/simplebar.min.css";
+import { AuthContext } from "../../../context/AuthContext";
+import api from '../../../api/axios';
 
 const Sidebar = ({ showMenu, toggleMenu }) => {
     const location = useLocation();
     const isMobile = useMediaQuery({ maxWidth: 767 });
+    const { user } = useContext(AuthContext);
 
     const [localShow, setLocalShow] = useState(true);
     const isVisible = showMenu !== undefined ? showMenu : localShow;
@@ -20,6 +23,31 @@ const Sidebar = ({ showMenu, toggleMenu }) => {
     const toggleDropdown = (menu) => {
         setOpenDropdown(openDropdown === menu ? "" : menu);
     };
+
+    // --- Fetch all chat participants for organizer ---
+    const [participants, setParticipants] = useState(null); // null = loading
+    useEffect(() => {
+        const fetchParticipants = async () => {
+            try {
+                if (user?.role === "organizer") {
+                    const res = await api.get(`/exhibitors/all-for-organizer/${user.id}`);
+                    if (res.data.status) {
+                        setParticipants(res.data.participants);
+                    } else {
+                        setParticipants([]); // no participants
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching chat participants:", err);
+                setParticipants([]);
+            }
+        };
+        fetchParticipants();
+    }, [user]);
+
+    const isChatEnabled = participants !== null && participants.length > 0;
+    const isLoading = participants === null;
+    const isChatActive = location.pathname.includes("/chat");
 
     return (
         <>
@@ -147,6 +175,27 @@ const Sidebar = ({ showMenu, toggleMenu }) => {
                         </Link>
                     </li>
 
+                    {/* Chat */}
+                    <li className="nav-item mb-1">
+                        <Link
+                            to={isChatEnabled ? "/chat" : "#"}
+                            onClick={(e) => {
+                                if (!isChatEnabled) {
+                                    e.preventDefault();
+                                    if (!isLoading) console.log("No participants available for chat.");
+                                }
+                                if (isMobile) handleToggle();
+                            }}
+                            className={`nav-link d-flex align-items-center px-3 py-2 rounded ${isChatActive
+                                ? "active-link bg-light fw-semibold"
+                                : "text-secondary"
+                                } ${!isChatEnabled ? 'disabled-link' : ''}`}
+                        >
+                            <i className="bi bi-chat me-2 nav-icon"></i>
+                            Chat {isLoading ? "(Loading...)" : isChatEnabled ? "" : "(No participants)"}
+                        </Link>
+                    </li>
+
                     {/* Attendance / Check-in */}
                     <li className="nav-item mb-1">
                         <Link
@@ -231,6 +280,15 @@ const Sidebar = ({ showMenu, toggleMenu }) => {
         }
         .sidebar-toggler:hover {
           background-color: #d1d4d8ff;
+        }
+        /* Disabled chat link */
+        .disabled-link {
+            opacity: 0.6; 
+            pointer-events: none;
+            cursor: not-allowed !important;
+        }
+        .disabled-link:hover {
+             background-color: #dfdfdf36 !important;
         }
       `}</style>
         </>

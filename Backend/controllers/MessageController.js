@@ -100,7 +100,7 @@ const MessageController = {
                 { delivered: true, deliveredAt: new Date() }
             );
 
-            if (result.nModified === 0) {
+            if (result.modifiedCount === 0) {
                 return res.json({ status: true, message: "No messages updated (already delivered or unauthorized)" });
             }
 
@@ -123,7 +123,7 @@ const MessageController = {
                 { seen: true, seenAt: new Date(), unread: false }
             );
 
-            if (result.nModified === 0) {
+            if (result.modifiedCount === 0) {
                 return res.json({ status: true, message: "No messages updated (already seen or unauthorized)" });
             }
 
@@ -136,19 +136,28 @@ const MessageController = {
     // ---------------- GET UNREAD COUNT ----------------
     getUnreadCount: async (req, res) => {
         try {
-            const { userId, expo } = req.query;
+            const { userId, expo, senderId } = req.query;
 
-            const count = await Message.countDocuments({
+            if (!userId || !expo) {
+                return res.status(400).json({ status: false, message: "Missing parameters" });
+            }
+
+            const query = {
                 receiver: userId,
                 expo,
                 unread: true
-            });
+            };
+
+            if (senderId) query.sender = senderId; // Only count messages from this sender
+
+            const count = await Message.countDocuments(query);
 
             res.json({ status: true, unreadCount: count });
         } catch (err) {
             res.status(500).json({ status: false, message: err.message });
         }
     }
+
 };
 
 module.exports = MessageController;

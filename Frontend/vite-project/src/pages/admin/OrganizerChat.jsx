@@ -19,10 +19,22 @@ import tinycolor from "tinycolor2";
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 const colors = [
-    "#f44336", "#e91e63", "#9c27b0", "#673ab7",
-    "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4",
-    "#009688", "#4caf50", "#8bc34a", "#cddc39",
-    "#ffeb3b", "#ffc107", "#ff9800", "#ff5722",
+    "#f44336",
+    "#e91e63",
+    "#9c27b0",
+    "#673ab7",
+    "#3f51b5",
+    "#2196f3",
+    "#03a9f4",
+    "#00bcd4",
+    "#009688",
+    "#4caf50",
+    "#8bc34a",
+    "#cddc39",
+    "#ffeb3b",
+    "#ffc107",
+    "#ff9800",
+    "#ff5722",
 ];
 
 const stringToColor = (str) => {
@@ -52,9 +64,8 @@ const Avatar = ({ user, size = 45, className = "", ...props }) => {
 
     const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
     const baseColor = stringToColor(user.firstName || user.lastName || "");
-
-    const bgColor = tinycolor(baseColor).darken(20).toString(); // darker for background
-    const textColor = tinycolor(baseColor).lighten(30).toString(); // lighter for text
+    const bgColor = tinycolor(baseColor).darken(20).toString();
+    const textColor = tinycolor(baseColor).lighten(30).toString();
 
     return (
         <div
@@ -75,7 +86,7 @@ const Avatar = ({ user, size = 45, className = "", ...props }) => {
     );
 };
 
-const ExhibitorChat = () => {
+const OrganizerChat = () => {
     const { expoId } = useParams();
     const { user } = useContext(AuthContext);
     const [chatList, setChatList] = useState([]);
@@ -83,13 +94,11 @@ const ExhibitorChat = () => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef(null);
-
     const selectedChatRef = useRef(null);
     const socketRef = useRef(null);
     const hasConnected = useRef(false);
 
-
-    // ------------------ SOCKET CONNECTION ------------------ 
+    // ------------------ SOCKET CONNECTION ------------------
     useEffect(() => {
         if (!user || !user.id || hasConnected.current) return;
 
@@ -105,7 +114,6 @@ const ExhibitorChat = () => {
             const senderId = msg.sender._id || msg.sender;
             if (senderId === user.id) return;
 
-            // Update chat list (badge & last message)
             setChatList((prevList) =>
                 prevList.map((c) =>
                     c.user._id === senderId
@@ -118,40 +126,37 @@ const ExhibitorChat = () => {
                 )
             );
 
-            // Only append to messages if this is the currently selected chat
             if (selectedChatRef.current?.user._id === senderId) {
                 const fixedMsg = {
                     ...msg,
-                    sender: typeof msg.sender === "string"
-                        ? { _id: msg.sender, firstName: msg.senderFirstName || "", lastName: msg.senderLastName || "", avatar: msg.senderAvatar || "" }
-                        : msg.sender,
+                    sender:
+                        typeof msg.sender === "string"
+                            ? {
+                                _id: msg.sender,
+                                firstName: msg.senderFirstName || "",
+                                lastName: msg.senderLastName || "",
+                                avatar: msg.senderAvatar || "",
+                            }
+                            : msg.sender,
                 };
-
                 setMessages((prev) => [...prev, fixedMsg]);
-
-                // Mark delivered & seen
                 markAsDelivered([msg._id], senderId);
                 markAsSeen([msg._id], senderId);
             } else {
-                // For messages of other chats, just mark as delivered
                 markAsDelivered([msg._id], senderId);
             }
         });
 
         s.on("messagesDelivered", (messageIds) => {
             setMessages((prev) => {
-                // update existing messages
                 const updated = prev.map((m) =>
                     messageIds.includes(m._id) ? { ...m, delivered: true } : m
                 );
-
-                // also add delivered for messages that are sent but not yet in messages array
                 messageIds.forEach((id) => {
                     if (!updated.some((m) => m._id === id)) {
                         updated.push({ _id: id, delivered: true });
                     }
                 });
-
                 return updated;
             });
         });
@@ -167,35 +172,30 @@ const ExhibitorChat = () => {
         return () => s.disconnect();
     }, []);
 
-
-    // ------------------ FETCH CHAT LIST ------------------ 
+    // ------------------ FETCH CHAT LIST ------------------
     useEffect(() => {
         const fetchChats = async () => {
             if (!expoId || !user || !user.id) return;
 
             try {
-                const orgRes = await api.get(`/auth/role/organizer`);
-                const organizers = (orgRes.data.users || []).filter(o => o._id !== user.id);
-
-                const exhibitorRes = await api.get(`/exhibitors/expo/${expoId}`);
-                const approvedExhibitors = exhibitorRes.data.exhibitors
-                    .filter((ex) => ex.status === "approved" && ex.user._id !== user.id)
-                    .map((ex) => ex.user);
-
-                const participants = [...organizers, ...approvedExhibitors];
+                const approvedExhibitors = await api.get(`/exhibitors/all-for-organizer/${user.id}`);
+                // Adjust based on your API response structure:
+                // e.g., res.data.exhibitors or res.data.data.exhibitors
+                
 
                 const chats = await Promise.all(
-                    participants.map(async (participant) => {
+                    approvedExhibitors.map(async (participant) => {
                         if (!participant || !participant._id)
                             return { user: participant, lastMessage: "", badge: 0 };
 
+                        // Fetch last message
                         const lastMsgRes = await api.get(
                             `/messages/conversation?user1=${user.id}&user2=${participant._id}&expo=${expoId}`
                         );
-
                         const allMessages = lastMsgRes.data.messages || [];
                         const lastMsg = allMessages[allMessages.length - 1]?.content || "";
 
+                        // Fetch unread count
                         const unreadRes = await api.get(
                             `/messages/unread-count?userId=${user.id}&expo=${expoId}&senderId=${participant._id}`
                         );
@@ -214,7 +214,8 @@ const ExhibitorChat = () => {
         fetchChats();
     }, [expoId, user.id]);
 
-    // ------------------ SELECT CHAT ------------------ 
+
+    // ------------------ SELECT CHAT ------------------
     const selectChat = async (chat) => {
         setSelectedChat(chat);
         selectedChatRef.current = chat;
@@ -228,7 +229,6 @@ const ExhibitorChat = () => {
 
             if (data.status) {
                 setMessages(data.messages);
-
                 const unseenIds = data.messages
                     .filter((m) => m.receiver._id === user.id && !m.seen)
                     .map((m) => m._id);
@@ -244,13 +244,12 @@ const ExhibitorChat = () => {
         }
     };
 
-    // ------------------ SEND MESSAGE ------------------ 
+    // ------------------ SEND MESSAGE ------------------
     const sendMessage = async () => {
         if (!newMessage.trim()) return;
         if (!selectedChat || !selectedChat.user || !selectedChat.user._id) return;
 
         try {
-            // 1️⃣ Save message via REST API
             const { data } = await api.post("/messages", {
                 sender: user.id,
                 receiver: selectedChat.user._id,
@@ -271,7 +270,6 @@ const ExhibitorChat = () => {
                     receiver: selectedChat.user,
                 };
 
-                // 2️⃣ Update local messages
                 setMessages((prev) => {
                     if (prev.some((m) => m._id === sentMessage._id)) return prev;
                     return [...prev, sentMessage];
@@ -285,7 +283,6 @@ const ExhibitorChat = () => {
                     )
                 );
 
-                // 3️⃣ Emit to receiver via socket (no DB creation here!)
                 if (socketRef.current) {
                     socketRef.current.emit("sendMessage", sentMessage);
                 }
@@ -297,14 +294,11 @@ const ExhibitorChat = () => {
         }
     };
 
-
-    // ------------------ MARK DELIVERED ------------------ 
     const markAsDelivered = async (messageIds, senderId) => {
         if (!messageIds.length || !senderId) return;
 
         try {
             await api.put("/messages/delivered", { messageIds, userId: user.id });
-
             if (socketRef.current) {
                 socketRef.current.emit("markDelivered", { messageIds, userId: user.id, senderId });
             }
@@ -313,13 +307,11 @@ const ExhibitorChat = () => {
         }
     };
 
-    // ------------------ MARK SEEN ------------------ 
     const markAsSeen = async (messageIds, senderId) => {
         if (!messageIds.length || !senderId) return;
 
         try {
             await api.put("/messages/seen", { messageIds, userId: user.id });
-
             if (socketRef.current) {
                 socketRef.current.emit("markSeen", { messageIds, userId: user.id, senderId });
             }
@@ -328,12 +320,10 @@ const ExhibitorChat = () => {
         }
     };
 
-    // ------------------ AUTO SCROLL ------------------ 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // ------------------ HANDLE ENTER ------------------ 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -341,20 +331,18 @@ const ExhibitorChat = () => {
         }
     };
 
-
-
     return (
-        <div className="exhibitor-chat-page">
+        <div className="organizer-chat-page">
             <h4 className="fw-semibold text-secondary mb-4">
-                Start a Conversation with the Organizer or Other Exhibitors
+                Start a Conversation with Exhibitors
             </h4>
+
             <Container fluid className="py-1">
                 <Row>
                     <Col md={12}>
                         <Card id="chat3" style={{ borderRadius: "15px", height: "100%" }}>
                             <Card.Body>
                                 <Row>
-                                    {/* LEFT CHAT LIST */}
                                     <Col md={6} lg={5} xl={4} className="mb-4 mb-md-0">
                                         <div className="p-3">
                                             <InputGroup className="rounded mb-3">
@@ -363,11 +351,15 @@ const ExhibitorChat = () => {
                                                     <i className="fas fa-search"></i>
                                                 </InputGroup.Text>
                                             </InputGroup>
+
                                             <div style={{ position: "relative", height: "600px", overflowY: "auto" }}>
                                                 <ul className="list-unstyled mb-0">
                                                     {chatList.map((chat, idx) => (
                                                         <li
-                                                            className={`p-2 border-bottom chat-list ${selectedChat && selectedChat.user._id === chat.user._id ? 'bg-info bg-opacity-10' : ''}`}
+                                                            className={`p-2 border-bottom chat-list ${selectedChat && selectedChat.user._id === chat.user._id
+                                                                ? "bg-info bg-opacity-10"
+                                                                : ""
+                                                                }`}
                                                             key={idx}
                                                             onClick={() => selectChat(chat)}
                                                             style={{ cursor: "pointer" }}
@@ -379,13 +371,18 @@ const ExhibitorChat = () => {
                                                                     </div>
                                                                     <div className="pt-1">
                                                                         <p className="fw-bold mb-0">
-                                                                            {chat.user.firstName}&nbsp;{chat.user.lastName} ({chat.user.role})
+                                                                            {chat.user.firstName}&nbsp;{chat.user.lastName} (
+                                                                            {chat.user.role})
                                                                         </p>
                                                                         <p className="small text-muted">{chat.lastMessage}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="pt-1 text-end">
-                                                                    {chat.badge > 0 && <Badge bg="danger" pill>{chat.badge}</Badge>}
+                                                                    {chat.badge > 0 && (
+                                                                        <Badge bg="danger" pill>
+                                                                            {chat.badge}
+                                                                        </Badge>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </li>
@@ -395,11 +392,19 @@ const ExhibitorChat = () => {
                                         </div>
                                     </Col>
 
-                                    {/* RIGHT CHAT PANEL */}
                                     <Col md={6} lg={7} xl={8}>
-                                        <div style={{ position: "relative", height: "600px", overflowY: "auto", paddingTop: "1rem", paddingRight: "1rem", display: "flex", flexDirection: "column" }}>
+                                        <div
+                                            style={{
+                                                position: "relative",
+                                                height: "600px",
+                                                overflowY: "auto",
+                                                paddingTop: "1rem",
+                                                paddingRight: "1rem",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                            }}
+                                        >
                                             {!selectedChat ? (
-                                                // 1️⃣ No chat selected
                                                 <div
                                                     className="d-flex justify-content-center align-items-center flex-grow-1 text-muted"
                                                     style={{ fontSize: "1.1rem" }}
@@ -407,7 +412,6 @@ const ExhibitorChat = () => {
                                                     Select a chat to start conversation
                                                 </div>
                                             ) : messages.length === 0 ? (
-                                                // 2️⃣ Chat selected but no messages
                                                 <div
                                                     className="d-flex justify-content-center align-items-center flex-grow-1 text-muted"
                                                     style={{ fontSize: "1.1rem" }}
@@ -415,7 +419,6 @@ const ExhibitorChat = () => {
                                                     Send message to start conversation
                                                 </div>
                                             ) : (
-                                                // 3️⃣ Chat selected with messages
                                                 messages.map((msg, idx) => (
                                                     <div
                                                         key={msg._id || idx}
@@ -428,8 +431,8 @@ const ExhibitorChat = () => {
                                                         <div>
                                                             <p
                                                                 className={`small p-2 mb-1 rounded-3 ${msg.sender._id === user.id
-                                                                        ? "text-white bg-primary"
-                                                                        : "bg-light text-dark"
+                                                                    ? "text-white bg-primary"
+                                                                    : "bg-light text-dark"
                                                                     }`}
                                                             >
                                                                 {msg.content}
@@ -462,12 +465,15 @@ const ExhibitorChat = () => {
                                             <div ref={messagesEndRef}></div>
                                         </div>
 
-                                        {/* Message Input */}
                                         <div className="text-muted d-flex justify-content-start align-items-center pe-3 pt-3 mt-2">
                                             <Avatar user={user} size={30} className="me-2" />
                                             <Form.Control
                                                 as="textarea"
-                                                placeholder={selectedChat ? `Type message to ${selectedChat.user.firstName} ${selectedChat.user.lastName}...` : "Select a chat to start messaging..."}
+                                                placeholder={
+                                                    selectedChat
+                                                        ? `Type message to ${selectedChat.user.firstName} ${selectedChat.user.lastName}...`
+                                                        : "Select a chat to start messaging..."
+                                                }
                                                 className="message"
                                                 value={newMessage}
                                                 onChange={(e) => setNewMessage(e.target.value)}
@@ -492,28 +498,44 @@ const ExhibitorChat = () => {
                 </Row>
             </Container>
 
-            <style>{` 
-    .send{ color: #fff !important; border-radius: 50%; } 
-    .send:hover{ background-color: #0b4baaff !important; border-radius: 50%; } 
-    .message{ height: 20px; transition: height 0.3s ease-in-out; } 
-    .message:focus{ height: 160px; max-height: 170px; } 
-    .chat-list{ transition: all 0.2s ease; } 
-    .chat-list:hover{ background-color: #ddddddd0 !important; } 
-    .small.p-2 { 
-    max-width: 50vw;
-    word-break: break-word; 
-    white-space: pre-wrap; 
-    }
-    .chat-list .small.text-muted { 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    white-space: nowrap; 
-    max-width: 200px; /* adjust based on your layout */
-    display: block;
-    }
-`}</style>
+            <style>{`
+        .send{
+          color: #fff !important;
+          border-radius: 50%;
+        }
+        .send:hover{
+          background-color: #0b4baaff !important;
+          border-radius: 50%;
+        }
+        .message{
+          height: 20px;
+          transition: height 0.3s ease-in-out;
+        }
+        .message:focus{
+          height: 160px;
+          max-height: 170px;
+        }
+        .chat-list{
+          transition: all 0.2s ease;
+        }
+        .chat-list:hover{
+          background-color: #ddddddd0 !important;
+        }
+        .small.p-2 {
+          max-width: 50vw;
+          word-break: break-word;
+          white-space: pre-wrap;
+        }
+        .chat-list .small.text-muted {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 200px;
+          display: block;
+        }
+      `}</style>
         </div>
     );
 };
 
-export default ExhibitorChat;
+export default OrganizerChat;
