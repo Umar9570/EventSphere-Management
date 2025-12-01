@@ -34,34 +34,49 @@ const Expo = require("./models/ExpoSchema");
 const Exhibitor = require("./models/ExhibitorSchema");
 
 // Map to store connected users by userId
-const userSocketMap = new Map();
+// store multiple sockets per user
+const userSockets = new Map();
 
 io.on("connection", (socket) => {
     console.log("New user connected:", socket.id);
 
-    // Join a room for a specific user and expo
-    socket.on("joinExpo", ({ userId, expoId }) => {
-        if (userId) {
-            userSocketMap.set(userId, socket.id);
-            socket.join(userId); // personal room
-            socket.join(expoId);
-            console.log(`User ${userId} joined expo ${expoId}.`);
-        }
-    });
+    socket.on("joinExpo", async ({ userId, expoId }) => {
+    if (!userId) return;
 
-    // Forward message to receiver (DO NOT create in DB here!)
+    if (!userSockets.has(userId)) userSockets.set(userId, new Set());
+    userSockets.get(userId).add(socket.id);
+
+    socket.join(userId); // personal room
+
+    // Always join current expo
+    if (expoId) socket.join(expoId);
+
+    // For organizers: join ALL expos they manage
+    try {
+        const user = await User.findById(userId);
+        if (user?.role === "organizer") {
+            const expos = await Expo.find({ organizer: userId });
+            expos.forEach((e) => socket.join(e._id.toString()));
+        }
+    } catch (err) {
+        console.error("Error joining all organizer expos:", err);
+    }
+
+    console.log(`User ${userId} joined expo ${expoId}`);
+});
+
+
     socket.on("sendMessage", (message) => {
-        try {
-            const receiverId = message.receiver._id || message.receiver;
-            if (receiverId) {
-                io.to(receiverId).emit("receiveMessage", message);
-            }
-        } catch (err) {
-            console.error("Socket sendMessage error:", err);
+        const receiverId = message.receiver._id || message.receiver;
+        if (!receiverId) return;
+
+        // send to all sockets of receiver
+        const sockets = userSockets.get(receiverId);
+        if (sockets) {
+            sockets.forEach((sid) => io.to(sid).emit("receiveMessage", message));
         }
     });
 
-    // Mark messages as delivered
     socket.on("markDelivered", ({ messageIds, userId, senderId }) => {
         if (!messageIds?.length || !userId || !senderId) return;
 
@@ -70,12 +85,14 @@ io.on("connection", (socket) => {
             { delivered: true, deliveredAt: new Date() }
         )
         .then(() => {
-            io.to(senderId).emit("messagesDelivered", messageIds);
+            const sockets = userSockets.get(senderId);
+            if (sockets) {
+                sockets.forEach((sid) => io.to(sid).emit("messagesDelivered", messageIds));
+            }
         })
         .catch(console.error);
     });
 
-    // Mark messages as seen
     socket.on("markSeen", ({ messageIds, userId, senderId }) => {
         if (!messageIds?.length || !userId || !senderId) return;
 
@@ -84,19 +101,22 @@ io.on("connection", (socket) => {
             { seen: true, seenAt: new Date(), unread: false }
         )
         .then(() => {
-            io.to(senderId).emit("messagesSeen", messageIds);
+            const sockets = userSockets.get(senderId);
+            if (sockets) {
+                sockets.forEach((sid) => io.to(sid).emit("messagesSeen", messageIds));
+            }
         })
         .catch(console.error);
     });
 
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
-        userSocketMap.forEach((value, key) => {
-            if (value === socket.id) userSocketMap.delete(key);
+        userSockets.forEach((sids, userId) => {
+            sids.delete(socket.id);
+            if (!sids.size) userSockets.delete(userId);
         });
     });
 });
-
 
 http.listen(process.env.PORT, () => {
     console.log(`Server is running on port ${process.env.PORT}`)

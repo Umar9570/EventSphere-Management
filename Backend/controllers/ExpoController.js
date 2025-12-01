@@ -117,6 +117,17 @@ const ExpoController = {
         }
     },
 
+    getAllForOrganizer: async (req, res) => {
+        try {
+            const { userId } = req.params;
+            const expos = await ExpoModel.find({ organizer: userId }); // or whatever field links expo → organizer
+            res.json({ expos });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: "Server error" });
+        }
+    },
+
     // ---------------- UPDATE BOOTH ASSIGNMENT COUNT ----------------
     updateBoothCount: async (req, res) => {
         try {

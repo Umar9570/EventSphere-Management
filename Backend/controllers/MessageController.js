@@ -10,12 +10,9 @@ const MessageController = {
         try {
             const { sender, receiver, expo, content } = req.body;
 
-            if (!sender || !receiver || !expo || !content) {
+            if (!sender || !receiver || !content) {
                 return res.json({ status: false, message: "Missing fields" });
             }
-
-            const expoExists = await Expo.findById(expo);
-            if (!expoExists) return res.json({ status: false, message: "Expo not found" });
 
             const senderUser = await User.findById(sender);
             const receiverUser = await User.findById(receiver);
@@ -24,7 +21,15 @@ const MessageController = {
                 return res.json({ status: false, message: "Sender or Receiver not found" });
             }
 
-            // Validate sender
+            // Only validate expo if sender is not organizer
+            if (senderUser.role !== "organizer") {
+                if (!expo) return res.json({ status: false, message: "Expo is required" });
+
+                const expoExists = await Expo.findById(expo);
+                if (!expoExists) return res.json({ status: false, message: "Expo not found" });
+            }
+
+            // Validate sender (exhibitor)
             if (senderUser.role === "exhibitor") {
                 const exhibitorData = await Exhibitor.findOne({ user: sender });
                 if (!exhibitorData || String(exhibitorData.expo) !== String(expo))
@@ -33,8 +38,8 @@ const MessageController = {
                     return res.json({ status: false, message: "Only approved exhibitors can send messages" });
             }
 
-            // Validate receiver
-            if (receiverUser.role === "exhibitor") {
+            // Validate receiver (exhibitor)
+            if (receiverUser.role === "exhibitor" && senderUser.role !== "organizer") {
                 const targetExhibitor = await Exhibitor.findOne({ user: receiver });
                 if (!targetExhibitor || String(targetExhibitor.expo) !== String(expo))
                     return res.json({ status: false, message: "Receiver is not part of your expo" });
@@ -42,20 +47,28 @@ const MessageController = {
                     return res.json({ status: false, message: "Receiver is not approved" });
             }
 
-            // Create message
-            const message = await Message.create({
+            // Create message payload
+            const messagePayload = {
                 sender,
                 receiver,
-                expo,
                 content,
                 delivered: false,
                 seen: false,
                 unread: true
-            });
+            }
+
+            // Include expo only if defined, otherwise omit it (important for organizer)
+            if (senderUser.role !== "organizer" && expo) {
+                messagePayload.expo = expo;
+            }
+
+            // Create message
+            const message = await Message.create(messagePayload);
 
             res.json({ status: true, message: "Message sent", data: message });
 
         } catch (err) {
+            console.error("Send message error:", err);
             res.status(500).json({ status: false, message: err.message });
         }
     },
@@ -65,23 +78,28 @@ const MessageController = {
         try {
             const { user1, user2, expo } = req.query;
 
-            if (!user1 || !user2 || !expo) {
+            if (!user1 || !user2) {
                 return res.json({ status: false, message: "Missing parameters" });
             }
 
-            const messages = await Message.find({
-                expo,
+            const filter = {
                 $or: [
                     { sender: user1, receiver: user2 },
                     { sender: user2, receiver: user1 }
                 ]
-            })
+            };
+
+            // Only filter by expo if a valid expo is provided
+            if (expo && expo !== "undefined") {
+                filter.expo = expo;
+            }
+
+            const messages = await Message.find(filter)
                 .sort({ createdAt: 1 })
                 .populate("sender", "firstName lastName role")
                 .populate("receiver", "firstName lastName role");
 
             res.json({ status: true, messages });
-
         } catch (err) {
             res.status(500).json({ status: false, message: err.message });
         }
@@ -138,20 +156,19 @@ const MessageController = {
         try {
             const { userId, expo, senderId } = req.query;
 
-            if (!userId || !expo) {
+            if (!userId) {
                 return res.status(400).json({ status: false, message: "Missing parameters" });
             }
 
             const query = {
                 receiver: userId,
-                expo,
                 unread: true
             };
 
-            if (senderId) query.sender = senderId; // Only count messages from this sender
+            if (expo) query.expo = expo; // Only include expo if provided
+            if (senderId) query.sender = senderId;
 
             const count = await Message.countDocuments(query);
-
             res.json({ status: true, unreadCount: count });
         } catch (err) {
             res.status(500).json({ status: false, message: err.message });

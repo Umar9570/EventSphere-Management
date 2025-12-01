@@ -106,14 +106,33 @@ const OrganizerChat = () => {
         hasConnected.current = true;
         socketRef.current = s;
 
-        if (expoId) {
+        // ---------------- JOIN CURRENT EXPO ROOM ----------------
+        if (expoId && expoId !== "undefined") {
             s.emit("joinExpo", { userId: user.id, expoId });
         }
 
+        // ---------------- JOIN ALL EXPO ROOMS FOR ORGANIZER ----------------
+        if (user.role === "organizer") {
+            const joinAllExpos = async () => {
+                try {
+                    const res = await api.get(`/expos/all-for-organizer/${user.id}`);
+                    const expos = Array.isArray(res.data.expos) ? res.data.expos : [];
+                    expos.forEach((expo) => {
+                        if (expo._id) s.emit("joinExpo", { userId: user.id, expoId: expo._id });
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            joinAllExpos();
+        }
+
+        // ---------------- RECEIVE MESSAGE ----------------
         s.on("receiveMessage", (msg) => {
             const senderId = msg.sender._id || msg.sender;
             if (senderId === user.id) return;
 
+            // Update chat list badges and last message
             setChatList((prevList) =>
                 prevList.map((c) =>
                     c.user._id === senderId
@@ -126,6 +145,7 @@ const OrganizerChat = () => {
                 )
             );
 
+            // Update messages array if current chat is selected
             if (selectedChatRef.current?.user._id === senderId) {
                 const fixedMsg = {
                     ...msg,
@@ -140,6 +160,8 @@ const OrganizerChat = () => {
                             : msg.sender,
                 };
                 setMessages((prev) => [...prev, fixedMsg]);
+
+                // Mark as delivered and seen
                 markAsDelivered([msg._id], senderId);
                 markAsSeen([msg._id], senderId);
             } else {
@@ -147,11 +169,13 @@ const OrganizerChat = () => {
             }
         });
 
+        // ---------------- MESSAGES DELIVERED ----------------
         s.on("messagesDelivered", (messageIds) => {
             setMessages((prev) => {
                 const updated = prev.map((m) =>
                     messageIds.includes(m._id) ? { ...m, delivered: true } : m
                 );
+                // In case some messages are missing from state
                 messageIds.forEach((id) => {
                     if (!updated.some((m) => m._id === id)) {
                         updated.push({ _id: id, delivered: true });
@@ -161,6 +185,7 @@ const OrganizerChat = () => {
             });
         });
 
+        // ---------------- MESSAGES SEEN ----------------
         s.on("messagesSeen", (messageIds) => {
             setMessages((prev) =>
                 prev.map((m) =>
@@ -169,19 +194,31 @@ const OrganizerChat = () => {
             );
         });
 
-        return () => s.disconnect();
-    }, []);
+        return () => {
+            s.disconnect();
+            hasConnected.current = false;
+        };
+    }, [user, expoId]);
 
     // ------------------ FETCH CHAT LIST ------------------
     useEffect(() => {
         const fetchChats = async () => {
-            if (!expoId || !user || !user.id) return;
+            if (!user || !user.id) return;
 
             try {
-                const approvedExhibitors = await api.get(`/exhibitors/all-for-organizer/${user.id}`);
-                // Adjust based on your API response structure:
-                // e.g., res.data.exhibitors or res.data.data.exhibitors
-                
+                const res = await api.get(`/exhibitors/all-for-organizer/${user.id}`);
+
+                const approvedExhibitors = Array.isArray(res.data.participants)
+                    ? res.data.participants
+                    : [];
+
+                if (!approvedExhibitors.length) {
+                    setChatList([]);
+                    return;
+                }
+
+                // safe expo param
+                const expoParam = expoId && expoId !== "undefined" ? expoId : undefined;
 
                 const chats = await Promise.all(
                     approvedExhibitors.map(async (participant) => {
@@ -190,14 +227,14 @@ const OrganizerChat = () => {
 
                         // Fetch last message
                         const lastMsgRes = await api.get(
-                            `/messages/conversation?user1=${user.id}&user2=${participant._id}&expo=${expoId}`
+                            `/messages/conversation?user1=${user.id}&user2=${participant._id}${expoParam ? `&expo=${expoParam}` : ""}`
                         );
                         const allMessages = lastMsgRes.data.messages || [];
                         const lastMsg = allMessages[allMessages.length - 1]?.content || "";
 
                         // Fetch unread count
                         const unreadRes = await api.get(
-                            `/messages/unread-count?userId=${user.id}&expo=${expoId}&senderId=${participant._id}`
+                            `/messages/unread-count?userId=${user.id}${expoParam ? `&expo=${expoParam}` : ""}&senderId=${participant._id}`
                         );
                         const unreadCount = unreadRes.data.unreadCount || 0;
 
@@ -208,12 +245,12 @@ const OrganizerChat = () => {
                 setChatList(chats);
             } catch (err) {
                 console.error("Fetch chats error:", err);
+                setChatList([]);
             }
         };
 
         fetchChats();
     }, [expoId, user.id]);
-
 
     // ------------------ SELECT CHAT ------------------
     const selectChat = async (chat) => {
@@ -223,8 +260,10 @@ const OrganizerChat = () => {
         if (!chat || !chat.user || !chat.user._id) return;
 
         try {
+            const expoParam = expoId && expoId !== "undefined" ? expoId : undefined;
+
             const { data } = await api.get(
-                `/messages/conversation?user1=${user.id}&user2=${chat.user._id}&expo=${expoId}`
+                `/messages/conversation?user1=${user.id}&user2=${chat.user._id}${expoParam ? `&expo=${expoParam}` : ""}`
             );
 
             if (data.status) {
@@ -250,14 +289,22 @@ const OrganizerChat = () => {
         if (!selectedChat || !selectedChat.user || !selectedChat.user._id) return;
 
         try {
-            const { data } = await api.post("/messages", {
+            // Build payload
+            const payload = {
                 sender: user.id,
                 receiver: selectedChat.user._id,
-                expo: expoId,
                 content: newMessage,
-            });
+            };
 
-            if (data.status) {
+            // Only send expo if user is not organizer
+            if (user.role !== "organizer" && expoId && expoId !== "undefined") {
+                payload.expo = expoId;
+            }
+
+            // Send message to backend
+            const { data } = await api.post("/messages", payload);
+
+            if (data.status && data.data) {
                 const sentMessage = {
                     ...data.data,
                     sender: {
@@ -270,6 +317,7 @@ const OrganizerChat = () => {
                     receiver: selectedChat.user,
                 };
 
+                // Update local messages
                 setMessages((prev) => {
                     if (prev.some((m) => m._id === sentMessage._id)) return prev;
                     return [...prev, sentMessage];
@@ -283,6 +331,7 @@ const OrganizerChat = () => {
                     )
                 );
 
+                // Emit socket
                 if (socketRef.current) {
                     socketRef.current.emit("sendMessage", sentMessage);
                 }

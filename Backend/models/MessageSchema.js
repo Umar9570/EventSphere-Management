@@ -17,7 +17,7 @@ const messageSchema = new Schema(
         expo: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Expo",
-            required: true
+            required: false
         },
 
         content: { type: String, required: true },

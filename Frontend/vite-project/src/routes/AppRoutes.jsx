@@ -89,6 +89,14 @@ const AppRoutes = () => (
         }
       />
       <Route
+        path="chat"
+        element={
+          <ProtectedRoute roles={["organizer"]}>
+            <OrganizerChat/> 
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="attendance"
         element={
           <ProtectedRoute roles={["organizer"]}>
@@ -131,15 +139,6 @@ const AppRoutes = () => (
           </ProtectedRoute>
         }
       />
-      <Route
-        path="chat"
-        element={
-          <ProtectedRoute roles={["organizer"]}>
-            <OrganizerChat/> 
-          </ProtectedRoute>
-        }
-      />
-      
     </Route>
 
   </Routes>

@@ -18,6 +18,8 @@ router.get('/', ExpoController.getAllExpos);
 // Get expo by ID
 router.get('/:id', ExpoController.getExpoById);
 
+router.get('/all-for-organizer/:userId', ExpoController.getAllForOrganizer);
+
 // Update booth count
 router.put('/:id/booths', ExpoController.updateBoothCount);
 
