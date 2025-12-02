@@ -113,13 +113,21 @@ const ExhibitorController = {
 
             // Get all approved exhibitors
             const exhibitors = await ExhibitorModel.find({ status: "approved" })
-                .populate("user");
+                .populate("user")
+                .populate("expo")
+                .populate("organization");
 
             // Merge users
             const participants = [
                 ...organizers,
-                ...exhibitors.map(ex => ex.user)
+                ...exhibitors.map(ex => ({
+                    ...ex.user.toObject(),
+                    orgName: ex.organization,
+                    expoName: ex.expo?.name || "" // expo name for search
+                }))
             ];
+
+
 
             res.json({ participants, status: true });
         } catch (err) {

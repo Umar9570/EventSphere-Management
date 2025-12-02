@@ -19,22 +19,10 @@ import tinycolor from "tinycolor2";
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 const colors = [
-    "#f44336",
-    "#e91e63",
-    "#9c27b0",
-    "#673ab7",
-    "#3f51b5",
-    "#2196f3",
-    "#03a9f4",
-    "#00bcd4",
-    "#009688",
-    "#4caf50",
-    "#8bc34a",
-    "#cddc39",
-    "#ffeb3b",
-    "#ffc107",
-    "#ff9800",
-    "#ff5722",
+    "#f44336", "#e91e63", "#9c27b0", "#673ab7",
+    "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4",
+    "#009688", "#4caf50", "#8bc34a", "#cddc39",
+    "#ffeb3b", "#ffc107", "#ff9800", "#ff5722",
 ];
 
 const stringToColor = (str) => {
@@ -93,10 +81,21 @@ const OrganizerChat = () => {
     const [selectedChat, setSelectedChat] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+
+    // 🔍 SEARCH TERM
+    const [searchTerm, setSearchTerm] = useState("");
+
     const messagesEndRef = useRef(null);
     const selectedChatRef = useRef(null);
     const socketRef = useRef(null);
     const hasConnected = useRef(false);
+
+    // ---------------- SORT HELPER ----------------
+    const sortChats = (list) => {
+        return [...list].sort((a, b) => {
+            return new Date(b.lastMessageObj?.createdAt || 0) - new Date(a.lastMessageObj?.createdAt || 0);
+        });
+    };
 
     // ------------------ SOCKET CONNECTION ------------------
     useEffect(() => {
@@ -132,18 +131,20 @@ const OrganizerChat = () => {
             const senderId = msg.sender._id || msg.sender;
             if (senderId === user.id) return;
 
-            // Update chat list badges and last message
-            setChatList((prevList) =>
-                prevList.map((c) =>
+            // Update chat list badges and last message, and move to top
+            setChatList((prevList) => {
+                const updated = prevList.map((c) =>
                     c.user._id === senderId
                         ? {
                             ...c,
                             lastMessage: msg.content,
+                            lastMessageObj: msg,
                             badge: selectedChatRef.current?.user._id === senderId ? 0 : c.badge + 1,
                         }
                         : c
-                )
-            );
+                );
+                return sortChats(updated);
+            });
 
             // Update messages array if current chat is selected
             if (selectedChatRef.current?.user._id === senderId) {
@@ -175,7 +176,6 @@ const OrganizerChat = () => {
                 const updated = prev.map((m) =>
                     messageIds.includes(m._id) ? { ...m, delivered: true } : m
                 );
-                // In case some messages are missing from state
                 messageIds.forEach((id) => {
                     if (!updated.some((m) => m._id === id)) {
                         updated.push({ _id: id, delivered: true });
@@ -207,7 +207,6 @@ const OrganizerChat = () => {
 
             try {
                 const res = await api.get(`/exhibitors/all-for-organizer/${user.id}`);
-
                 const approvedExhibitors = Array.isArray(res.data.participants)
                     ? res.data.participants
                     : [];
@@ -217,7 +216,6 @@ const OrganizerChat = () => {
                     return;
                 }
 
-                // safe expo param
                 const expoParam = expoId && expoId !== "undefined" ? expoId : undefined;
 
                 const chats = await Promise.all(
@@ -225,24 +223,32 @@ const OrganizerChat = () => {
                         if (!participant || !participant._id)
                             return { user: participant, lastMessage: "", badge: 0 };
 
-                        // Fetch last message
                         const lastMsgRes = await api.get(
                             `/messages/conversation?user1=${user.id}&user2=${participant._id}${expoParam ? `&expo=${expoParam}` : ""}`
                         );
                         const allMessages = lastMsgRes.data.messages || [];
-                        const lastMsg = allMessages[allMessages.length - 1]?.content || "";
+                        const lastMsgObj = allMessages[allMessages.length - 1] || {};
+                        const lastMsg = lastMsgObj?.content || "";
 
-                        // Fetch unread count
                         const unreadRes = await api.get(
                             `/messages/unread-count?userId=${user.id}${expoParam ? `&expo=${expoParam}` : ""}&senderId=${participant._id}`
                         );
                         const unreadCount = unreadRes.data.unreadCount || 0;
+                        // Get exhibitor info for expo
+                        // let expoName = "";
+                        // if (participant.expo) {
+                        //     const expoRes = await api.get(`/expos/${participant.expo}`);
+                        //     expoName = expoRes.data.name || "";
+                        // }
+                        let orgName = participant.orgName || participant.organization || "";
+                        let expoName = participant.expoName || participant.expo?.name || "";
 
-                        return { user: participant, lastMessage: lastMsg, badge: unreadCount };
+
+                        return { user: participant, lastMessage: lastMsg, lastMessageObj: lastMsgObj, badge: unreadCount, orgName, expoName };
                     })
                 );
 
-                setChatList(chats);
+                setChatList(sortChats(chats));
             } catch (err) {
                 console.error("Fetch chats error:", err);
                 setChatList([]);
@@ -261,13 +267,13 @@ const OrganizerChat = () => {
 
         try {
             const expoParam = expoId && expoId !== "undefined" ? expoId : undefined;
-
             const { data } = await api.get(
                 `/messages/conversation?user1=${user.id}&user2=${chat.user._id}${expoParam ? `&expo=${expoParam}` : ""}`
             );
 
             if (data.status) {
                 setMessages(data.messages);
+
                 const unseenIds = data.messages
                     .filter((m) => m.receiver._id === user.id && !m.seen)
                     .map((m) => m._id);
@@ -275,9 +281,12 @@ const OrganizerChat = () => {
                 if (unseenIds.length) markAsSeen(unseenIds, chat.user._id);
             }
 
-            setChatList((prev) =>
-                prev.map((c) => (c.user._id === chat.user._id ? { ...c, badge: 0 } : c))
-            );
+            setChatList((prev) => {
+                const updated = prev.map((c) =>
+                    c.user._id === chat.user._id ? { ...c, badge: 0 } : c
+                );
+                return sortChats(updated);
+            });
         } catch (err) {
             console.error("Select chat error:", err);
         }
@@ -289,19 +298,15 @@ const OrganizerChat = () => {
         if (!selectedChat || !selectedChat.user || !selectedChat.user._id) return;
 
         try {
-            // Build payload
             const payload = {
                 sender: user.id,
                 receiver: selectedChat.user._id,
                 content: newMessage,
             };
-
-            // Only send expo if user is not organizer
             if (user.role !== "organizer" && expoId && expoId !== "undefined") {
                 payload.expo = expoId;
             }
 
-            // Send message to backend
             const { data } = await api.post("/messages", payload);
 
             if (data.status && data.data) {
@@ -317,21 +322,20 @@ const OrganizerChat = () => {
                     receiver: selectedChat.user,
                 };
 
-                // Update local messages
                 setMessages((prev) => {
                     if (prev.some((m) => m._id === sentMessage._id)) return prev;
                     return [...prev, sentMessage];
                 });
 
-                setChatList((prev) =>
-                    prev.map((c) =>
+                setChatList((prev) => {
+                    const updated = prev.map((c) =>
                         c.user._id === selectedChat.user._id
-                            ? { ...c, lastMessage: sentMessage.content }
+                            ? { ...c, lastMessage: sentMessage.content, lastMessageObj: sentMessage }
                             : c
-                    )
-                );
+                    );
+                    return sortChats(updated);
+                });
 
-                // Emit socket
                 if (socketRef.current) {
                     socketRef.current.emit("sendMessage", sentMessage);
                 }
@@ -345,7 +349,6 @@ const OrganizerChat = () => {
 
     const markAsDelivered = async (messageIds, senderId) => {
         if (!messageIds.length || !senderId) return;
-
         try {
             await api.put("/messages/delivered", { messageIds, userId: user.id });
             if (socketRef.current) {
@@ -358,7 +361,6 @@ const OrganizerChat = () => {
 
     const markAsSeen = async (messageIds, senderId) => {
         if (!messageIds.length || !senderId) return;
-
         try {
             await api.put("/messages/seen", { messageIds, userId: user.id });
             if (socketRef.current) {
@@ -380,6 +382,18 @@ const OrganizerChat = () => {
         }
     };
 
+    // ------------------ FILTERED CHAT LIST FOR SEARCH ------------------
+    const filteredChatList = chatList.filter((chat) => {
+        const f = searchTerm.toLowerCase();
+        const fn = chat.user.firstName?.toLowerCase() || "";
+        const ln = chat.user.lastName?.toLowerCase() || "";
+        const role = chat.user.role?.toLowerCase() || "";
+        const org = chat.orgName?.toLowerCase() || "";
+        const expo = chat.expoName?.toLowerCase() || "";
+
+        return fn.includes(f) || ln.includes(f) || role.includes(f) || expo.includes(f) ||  org.includes(f);
+    });
+
     return (
         <div className="organizer-chat-page">
             <h4 className="fw-semibold text-secondary mb-4">
@@ -395,7 +409,13 @@ const OrganizerChat = () => {
                                     <Col md={6} lg={5} xl={4} className="mb-4 mb-md-0">
                                         <div className="p-3">
                                             <InputGroup className="rounded mb-3">
-                                                <Form.Control placeholder="Search" type="search" className="rounded" />
+                                                <Form.Control
+                                                    placeholder="Search by name, org, expo"
+                                                    type="search"
+                                                    className="rounded"
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
                                                 <InputGroup.Text className="border-0">
                                                     <i className="fas fa-search"></i>
                                                 </InputGroup.Text>
@@ -403,7 +423,7 @@ const OrganizerChat = () => {
 
                                             <div style={{ position: "relative", height: "600px", overflowY: "auto" }}>
                                                 <ul className="list-unstyled mb-0">
-                                                    {chatList.map((chat, idx) => (
+                                                    {filteredChatList.map((chat, idx) => (
                                                         <li
                                                             className={`p-2 border-bottom chat-list ${selectedChat && selectedChat.user._id === chat.user._id
                                                                 ? "bg-info bg-opacity-10"
@@ -419,19 +439,22 @@ const OrganizerChat = () => {
                                                                         <Avatar user={chat.user} size={40} className="me-3" />
                                                                     </div>
                                                                     <div className="pt-1">
-                                                                        <p className="fw-bold mb-0">
-                                                                            {chat.user.firstName}&nbsp;{chat.user.lastName} (
-                                                                            {chat.user.role})
+                                                                        <p className="fw-semibold mb-0">
+                                                                            {chat.user.firstName}&nbsp;{chat.user.lastName} ({chat.user.role})
                                                                         </p>
-                                                                        <p className="small text-muted">{chat.lastMessage}</p>
+                                                                        {chat.user.role !== 'organizer' && (
+                                                                            <p className="text-muted" style={{ fontSize: 11, margin: 0 }}>
+                                                                                org: {chat.orgName}
+                                                                            </p>
+                                                                        )}
+                                                                        <p className="text-muted m-0" style={{fontSize: 11}}>
+                                                                           expo: {chat.expoName}
+                                                                        </p>
+                                                                        <p className="small text-muted mb-1 mt-1 pt-1">{chat.lastMessage}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="pt-1 text-end">
-                                                                    {chat.badge > 0 && (
-                                                                        <Badge bg="danger" pill>
-                                                                            {chat.badge}
-                                                                        </Badge>
-                                                                    )}
+                                                                    {chat.badge > 0 && <Badge bg="danger" pill>{chat.badge}</Badge>}
                                                                 </div>
                                                             </div>
                                                         </li>
@@ -454,44 +477,23 @@ const OrganizerChat = () => {
                                             }}
                                         >
                                             {!selectedChat ? (
-                                                <div
-                                                    className="d-flex justify-content-center align-items-center flex-grow-1 text-muted"
-                                                    style={{ fontSize: "1.1rem" }}
-                                                >
+                                                <div className="d-flex justify-content-center align-items-center flex-grow-1 text-muted" style={{ fontSize: "1.1rem" }}>
                                                     Select a chat to start conversation
                                                 </div>
                                             ) : messages.length === 0 ? (
-                                                <div
-                                                    className="d-flex justify-content-center align-items-center flex-grow-1 text-muted"
-                                                    style={{ fontSize: "1.1rem" }}
-                                                >
+                                                <div className="d-flex justify-content-center align-items-center flex-grow-1 text-muted" style={{ fontSize: "1.1rem" }}>
                                                     Send message to start conversation
                                                 </div>
                                             ) : (
                                                 messages.map((msg, idx) => (
-                                                    <div
-                                                        key={msg._id || idx}
-                                                        className={`d-flex flex-row justify-content-${msg.sender._id === user.id ? "end" : "start"
-                                                            } mb-3`}
-                                                    >
-                                                        {msg.sender._id !== user.id && (
-                                                            <Avatar user={msg.sender} size={40} className="me-2" />
-                                                        )}
+                                                    <div key={msg._id || idx} className={`d-flex flex-row justify-content-${msg.sender._id === user.id ? "end" : "start"} mb-3`}>
+                                                        {msg.sender._id !== user.id && <Avatar user={msg.sender} size={40} className="me-2" />}
                                                         <div>
-                                                            <p
-                                                                className={`small p-2 mb-1 rounded-3 ${msg.sender._id === user.id
-                                                                    ? "text-white bg-primary"
-                                                                    : "bg-light text-dark"
-                                                                    }`}
-                                                            >
+                                                            <p className={`small p-2 mb-1 rounded-3 ${msg.sender._id === user.id ? "text-white bg-primary" : "bg-light text-dark"}`}>
                                                                 {msg.content}
                                                             </p>
-                                                            <p
-                                                                className={`small mb-3 rounded-3 text-muted ${msg.sender._id === user.id ? "text-end" : ""
-                                                                    }`}
-                                                            >
-                                                                {new Date(msg.createdAt).toLocaleTimeString()} |{" "}
-                                                                {new Date(msg.createdAt).toLocaleDateString()}
+                                                            <p className={`small mb-3 rounded-3 text-muted ${msg.sender._id === user.id ? "text-end" : ""}`}>
+                                                                {new Date(msg.createdAt).toLocaleTimeString()} | {new Date(msg.createdAt).toLocaleDateString()}
                                                                 {msg.sender._id === user.id && (
                                                                     <span className="ms-1">
                                                                         {msg.seen ? (
@@ -505,9 +507,7 @@ const OrganizerChat = () => {
                                                                 )}
                                                             </p>
                                                         </div>
-                                                        {msg.sender._id === user.id && (
-                                                            <Avatar user={msg.sender} size={40} className="ms-2" />
-                                                        )}
+                                                        {msg.sender._id === user.id && <Avatar user={msg.sender} size={40} className="ms-2" />}
                                                     </div>
                                                 ))
                                             )}
@@ -518,11 +518,7 @@ const OrganizerChat = () => {
                                             <Avatar user={user} size={30} className="me-2" />
                                             <Form.Control
                                                 as="textarea"
-                                                placeholder={
-                                                    selectedChat
-                                                        ? `Type message to ${selectedChat.user.firstName} ${selectedChat.user.lastName}...`
-                                                        : "Select a chat to start messaging..."
-                                                }
+                                                placeholder={selectedChat ? `Type message to ${selectedChat.user.firstName} ${selectedChat.user.lastName}...` : "Select a chat to start messaging..."}
                                                 className="message"
                                                 value={newMessage}
                                                 onChange={(e) => setNewMessage(e.target.value)}
@@ -548,41 +544,41 @@ const OrganizerChat = () => {
             </Container>
 
             <style>{`
-        .send{
-          color: #fff !important;
-          border-radius: 50%;
-        }
-        .send:hover{
-          background-color: #0b4baaff !important;
-          border-radius: 50%;
-        }
-        .message{
-          height: 20px;
-          transition: height 0.3s ease-in-out;
-        }
-        .message:focus{
-          height: 160px;
-          max-height: 170px;
-        }
-        .chat-list{
-          transition: all 0.2s ease;
-        }
-        .chat-list:hover{
-          background-color: #ddddddd0 !important;
-        }
-        .small.p-2 {
-          max-width: 50vw;
-          word-break: break-word;
-          white-space: pre-wrap;
-        }
-        .chat-list .small.text-muted {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 200px;
-          display: block;
-        }
-      `}</style>
+                .send{
+                    color: #fff !important;
+                    border-radius: 50%;
+                }
+                .send:hover{
+                    background-color: #0b4baaff !important;
+                    border-radius: 50%;
+                }
+                .message{
+                    height: 20px;
+                    transition: height 0.3s ease-in-out;
+                }
+                .message:focus{
+                    height: 160px;
+                    max-height: 170px;
+                }
+                .chat-list{
+                    transition: all 0.2s ease;
+                }
+                .chat-list:hover{
+                    background-color: #ddddddd0 !important;
+                }
+                .small.p-2 {
+                    max-width: 50vw;
+                    word-break: break-word;
+                    white-space: pre-wrap;
+                }
+                .chat-list .small.text-muted {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    max-width: 200px;
+                    display: block;
+                }
+            `}</style>
         </div>
     );
 };
