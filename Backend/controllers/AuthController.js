@@ -145,29 +145,45 @@ const AuthController = {
             const { id } = req.params;
             const { firstName, lastName, email, phone, password } = req.body;
 
+            // Fetch existing user
             const user = await UserModel.findById(id);
             if (!user) {
                 return res.json({ message: "User not found", status: false });
             }
 
-            let updatedData = { firstName, lastName, email, phone };
+            // Build update object, ignore empty fields
+            let updatedData = {};
+            if (firstName) updatedData.firstName = firstName;
+            if (lastName) updatedData.lastName = lastName;
+            if (email) updatedData.email = email;
+            if (phone) updatedData.phone = phone;
 
+            // If password is provided, hash it
             if (password) {
                 const hash = await bcrypt.hash(password, 10);
                 updatedData.password = hash;
             }
 
-            const updatedUser = await UserModel.findByIdAndUpdate(id, updatedData, { new: true });
+            // Update user in DB
+            await UserModel.findByIdAndUpdate(id, updatedData, { new: true });
+
+            // Merge updated fields with existing user, keep role intact
+            const fullUpdatedUser = {
+                ...user.toObject(),
+                ...updatedData,
+                role: user.role // ensure role stays unchanged
+            };
 
             res.json({
                 message: "User updated successfully",
-                user: updatedUser,
+                user: fullUpdatedUser,
                 status: true
             });
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
     },
+
 
     // ---------------- DELETE USER ----------------
     deleteUser: async (req, res) => {

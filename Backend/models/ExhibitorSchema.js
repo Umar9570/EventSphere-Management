@@ -10,7 +10,7 @@ const exhibitorSchema = new Schema(
     },
 
     organization: { type: String, required: true },
-    boothNumber: { type: String },
+    booth: { type: mongoose.Schema.Types.ObjectId, ref: "Booth", default: null },
     expo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Expo"

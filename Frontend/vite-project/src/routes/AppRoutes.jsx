@@ -18,6 +18,7 @@ import AllExpos from "../pages/exhibitor/AllExpos";
 import ExhibitorChat from "../pages/exhibitor/ExhibitorChat";
 import { AuthContext } from "../context/AuthContext"; // <-- import context
 import OrganizerChat from "../pages/admin/OrganizerChat";
+import Profile from "../pages/admin/Profile";
 
 
 const AppRoutes = () => (
@@ -101,6 +102,14 @@ const AppRoutes = () => (
         element={
           <ProtectedRoute roles={["organizer"]}>
             <Attendance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="profile"
+        element={
+          <ProtectedRoute roles={["organizer", "exhibitor"]}>
+            <Profile />
           </ProtectedRoute>
         }
       />

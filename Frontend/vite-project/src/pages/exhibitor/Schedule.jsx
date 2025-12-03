@@ -1,6 +1,6 @@
 // src/pages/exhibitor/Schedule.jsx
 import React, { useEffect, useState, useContext } from "react";
-import { Card, Spinner, Alert } from "react-bootstrap";
+import { Table, Spinner, Alert } from "react-bootstrap";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -78,6 +78,20 @@ const ExhibitorSchedule = () => {
 
     return (
         <div className="exhibitor-schedule">
+            <div className="col-sm-12 mb-5">
+                <div
+                    className="profile-bg-picture"
+                    style={{
+                        backgroundImage: "url('https://media.istockphoto.com/id/1353476783/vector/abstract-teal-circles-background.jpg?s=612x612&w=0&k=20&c=twp8lq5iWEUJ3Wzkp4HGnF89WxDKG--ZKTofQtFop7M=')",
+                    }}
+                >
+                    <span className="picture-bg-overlay"></span>
+
+                    <div className="centered-title fs-1">
+                        Stay Updated
+                    </div>
+                </div>
+            </div>
             <h4 className="fw-semibold text-secondary mb-4">Expo Schedule</h4>
 
             {error && (
@@ -91,32 +105,59 @@ const ExhibitorSchedule = () => {
             )}
 
             {schedule.length > 0 && (
-                <div className="row g-4">
-                    {schedule.map((item) => (
-                        <div key={item._id} className="col-12 col-md-6 col-lg-4">
-                            <Card className="shadow-sm border-0 h-100">
-                                <Card.Body>
-                                    <h6 className="fw-semibold mb-1">{item.title}</h6>
-                                    {item.description && (
-                                        <p className="text-secondary small mb-2">{item.description}</p>
-                                    )}
-                                    <p className="text-muted small mb-0">
-                                        <strong>Date:</strong>{" "}
-                                        {new Date(item.date).toLocaleDateString()}
-                                    </p>
-                                    <p className="text-muted small mb-0">
-                                        <strong>Time:</strong> {item.startTime} - {item.endTime}
-                                    </p>
-                                </Card.Body>
-                            </Card>
-                        </div>
-                    ))}
+                <div className="table-responsive">
+                    <Table striped bordered hover>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {schedule.map((item) => (
+                                <tr key={item._id}>
+                                    <td>{item.title}</td>
+                                    <td>{item.description || "-"}</td>
+                                    <td>{new Date(item.date).toLocaleDateString()}</td>
+                                    <td>{item.startTime} - {item.endTime}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
             )}
 
             <style>{`
         .exhibitor-schedule h4 { color: #0f172a; }
-        .card { border-radius: 14px; }
+        .table-responsive { margin-bottom: 1rem; }
+        table { border-radius: 14px; overflow: hidden; }
+        .profile-bg-picture {
+            height: 260px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .picture-bg-overlay {
+            background: rgba(0,0,0,0.4);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }                
+        .centered-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: 700;
+            z-index: 2;
+            text-align: center;
+        }  
       `}</style>
         </div>
     );

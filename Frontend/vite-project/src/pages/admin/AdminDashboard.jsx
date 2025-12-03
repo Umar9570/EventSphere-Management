@@ -97,6 +97,20 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard">
+            <div className="col-sm-12 mb-5">
+                <div
+                    className="profile-bg-picture"
+                    style={{
+                        backgroundImage: "url('https://media.istockphoto.com/id/1353476783/vector/abstract-teal-circles-background.jpg?s=612x612&w=0&k=20&c=twp8lq5iWEUJ3Wzkp4HGnF89WxDKG--ZKTofQtFop7M=')",
+                    }}
+                >
+                    <span className="picture-bg-overlay"></span>
+
+                    <div className="centered-title fs-1">
+                        Welcome to Dashboard!
+                    </div>
+                </div>
+            </div>
             {/* === TOP STATS === */}
             <Row className="g-3 mb-4">
                 {[
@@ -141,7 +155,7 @@ const AdminDashboard = () => {
             {/* === CHART + RECENT ACTIVITY === */}
             <Row className="g-3">
                 <Col xs={12} lg={8}>
-                    <Card className="shadow-sm border-0">
+                    <Card className="shadow border-0">
                         <Card.Header className="bg-white border-bottom fw-semibold">
                             Monthly Attendee Growth
                         </Card.Header>
@@ -172,7 +186,7 @@ const AdminDashboard = () => {
                 </Col>
 
                 <Col xs={12} lg={4}>
-                    <Card className="shadow-sm border-0">
+                    <Card className="shadow border-0">
                         <Card.Header className="bg-white border-bottom fw-semibold">
                             Recent Activity
                         </Card.Header>
@@ -209,6 +223,31 @@ const AdminDashboard = () => {
         }
         .stat-card i{
           color: #1099a8ff !important;
+        }
+        .profile-bg-picture {
+            height: 260px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .picture-bg-overlay {
+            background: rgba(0,0,0,0.4);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .centered-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: 700;
+            z-index: 2;
+            text-align: center;
         }
       `}</style>
         </div>

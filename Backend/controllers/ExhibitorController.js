@@ -45,9 +45,10 @@ const ExhibitorController = {
     // ---------------- GET PENDING OR ALL APPLICATIONS ----------------
     getApplications: async (req, res) => {
         try {
-            const exhibitors = await ExhibitorModel.find()
-                .populate("user")
-                .populate("expo");
+            const exhibitors = await ExhibitorModel.find({})
+                .populate("user")   // user info
+                .populate("expo")   // expo info
+                .populate("booth"); // booth info (important!)
 
             res.json({ exhibitors, status: true });
         } catch (err) {

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { FaBell, FaUserCircle, FaBars } from "react-icons/fa";
 import { AuthContext } from "../../../context/AuthContext";
+import { Link } from "react-router-dom";
 
 const Topbar = ({ toggleSidebar, user }) => {
   const { logout } = useContext(AuthContext);
@@ -164,10 +165,7 @@ const Topbar = ({ toggleSidebar, user }) => {
               }}
             >
               <li>
-                <button className="dropdown-item py-2">Profile</button>
-              </li>
-              <li>
-                <button className="dropdown-item py-2">Settings</button>
+                <Link to={"/profile"} className="dropdown-item py-2">Profile</Link>
               </li>
               <li>
                 <hr className="dropdown-divider my-1" />

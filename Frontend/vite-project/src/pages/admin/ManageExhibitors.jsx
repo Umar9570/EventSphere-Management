@@ -24,7 +24,7 @@ const ManageExhibitors = () => {
                     phone: ex.user?.phone || "N/A",
                     organization: ex.organization || "N/A",
                     bio: ex.bio || "N/A",
-                    boothNumber: ex.boothNumber || "Not Assigned",
+                    boothNumber: ex.booth?.boothNumber || "Not Assigned",
                     expoName: ex.expo?.name || "Unknown Expo",
                     status: ex.status || "pending",
                     createdAt: ex.createdAt,

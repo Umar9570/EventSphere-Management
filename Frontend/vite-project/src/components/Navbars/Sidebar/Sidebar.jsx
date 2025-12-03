@@ -249,7 +249,7 @@ const Sidebar = ({ showMenu, toggleMenu }) => {
           transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
           font-size: 15px;
           font-weight: 500;
-          background-color: #dfdfdf36 !important;
+        //   background-color: #dfdfdf36 !important;
           border-radius: 7px !important;
         }
         .nav-link i{

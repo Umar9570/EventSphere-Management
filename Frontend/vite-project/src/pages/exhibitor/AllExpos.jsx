@@ -124,6 +124,20 @@ const AllExpos = () => {
 
     return (
         <div className="p-4">
+            <div className="col-sm-12 mb-5">
+                <div
+                    className="profile-bg-picture"
+                    style={{
+                        backgroundImage: "url('https://media.istockphoto.com/id/1353476783/vector/abstract-teal-circles-background.jpg?s=612x612&w=0&k=20&c=twp8lq5iWEUJ3Wzkp4HGnF89WxDKG--ZKTofQtFop7M=')",
+                    }}
+                >
+                    <span className="picture-bg-overlay"></span>
+
+                    <div className="centered-title fs-1">
+                        Welcome to EventSphere!
+                    </div>
+                </div>
+            </div>
             <h4 className="fw-semibold text-secondary mb-4">All Available Expos</h4>
 
             {fetchError && (
@@ -245,6 +259,31 @@ const AllExpos = () => {
                     transform: translateY(-4px);
                     box-shadow: 0 4px 14px rgba(0,0,0,0.08);
                 }
+                .profile-bg-picture {
+                    height: 260px;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                }
+
+                .picture-bg-overlay {
+                    background: rgba(0,0,0,0.4);
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                }                
+                .centered-title {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: white;
+                    font-weight: 700;
+                    z-index: 2;
+                    text-align: center;
+                }                    
             `}</style>
         </div>
     );
