@@ -19,6 +19,10 @@ import ExhibitorChat from "../pages/exhibitor/ExhibitorChat";
 import { AuthContext } from "../context/AuthContext"; // <-- import context
 import OrganizerChat from "../pages/admin/OrganizerChat";
 import Profile from "../pages/admin/Profile";
+import About from "../pages/ClientSide/About";
+import Contact from "../pages/ClientSide/Contact";
+import Booknow from "../pages/ClientSide/BookNow";
+import Rooms from "../pages/ClientSide/Rooms";
 
 
 const AppRoutes = () => (
@@ -26,8 +30,13 @@ const AppRoutes = () => (
     {/* ---------------- Public Routes ---------------- */}
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
-    {/* <Route path="/" element={<Index />} /> */}
-    {/* <Route path="/home" element={<Index />} /> */}
+    <Route path="/" element={<Index />} />
+    <Route path="/home" element={<Index />} />
+    <Route path="/about" element={<About />} />
+    <Route path="/contact" element={<Contact />} />
+    <Route path="/booknow" element={<Booknow />} />
+    <Route path="/rooms" element={<Rooms />} />
+
 
     {/* ---------------- Protected Dashboard Routes ---------------- */}
     <Route

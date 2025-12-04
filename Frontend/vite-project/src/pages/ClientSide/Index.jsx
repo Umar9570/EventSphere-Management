@@ -12,7 +12,7 @@ const Index = () => {
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
         <div className="container">
           <a className="navbar-brand fw-bold text-primary fs-4" href="#">
-            <i className="bi bi-building me-2"></i>LuxuryStay Hotel
+            <i className="bi bi-building me-2"></i>EventSphere Expo
           </a>
 
           <button
@@ -32,8 +32,8 @@ const Index = () => {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link to={'/room-categories'} className="nav-link fw-semibold" >
-                  Rooms
+                <Link to={'/events'} className="nav-link fw-semibold" >
+                  Events
                 </Link>
               </li>
               <li className="nav-item">
@@ -46,6 +46,7 @@ const Index = () => {
                   Contact Us
                 </Link>
               </li>
+
               {user ? (
                 <>
                   <li className="nav-item">
@@ -59,9 +60,10 @@ const Index = () => {
                   <Link to="/login" className="nav-link fw-semibold">Login</Link>
                 </li>
               )}
+
               <li className="nav-item">
-                <Link to={'/booknow'} className="btn btn-primary px-3 fw-semibold">
-                  Book Now
+                <Link to={'/register-event'} className="btn btn-primary px-3 fw-semibold">
+                  Register Now
                 </Link>
               </li>
             </ul>
@@ -75,14 +77,14 @@ const Index = () => {
         <div className="container h-100 d-flex align-items-center">
           <div className="text-white col-md-7">
             <h1 className="display-4 fw-bold mb-3">
-              Experience Luxury & Comfort With LuxuryStay
+              Experience the Future of Tech Expos with EventSphere
             </h1>
             <p className="fs-5 mb-4">
-              Book your perfect stay with modern rooms, world-class service,
-              and a peaceful environment—all at unbeatable prices.
+              Discover cutting-edge innovations, connect with industry experts,
+              and participate in world-class sessions and workshops—all in one place.
             </p>
-            <Link to={'/room-categories'} className="btn btn-lg btn-primary fw-semibold px-4">
-              Explore Rooms
+            <Link to={'/events'} className="btn btn-lg btn-primary fw-semibold px-4">
+              Explore Events
             </Link>
           </div>
         </div>
@@ -95,17 +97,16 @@ const Index = () => {
 
             {/* LEFT TEXT */}
             <div className="col-lg-6 mb-4">
-              <h2 className="fw-bold text-primary mb-3">Welcome to LuxuryStay</h2>
+              <h2 className="fw-bold text-primary mb-3">Welcome to EventSphere Expo</h2>
               <p className="text-secondary fs-5">
-                At LuxuryStay, we combine elegance with comfort to provide
-                guests a memorable experience. Whether you're here for business,
-                leisure, or a relaxing getaway, our rooms and amenities are
-                designed to cater to your every need.
+                EventSphere specializes in hosting large-scale tech expos,
+                bringing together innovators, exhibitors, startups, and tech enthusiasts
+                from around the world. Our platform ensures smooth registration,
+                real-time event updates, and seamless communication.
               </p>
               <p className="text-secondary">
-                Enjoy luxurious rooms, 24/7 room service, high-speed internet,
-                delicious dining options, and friendly staff ready to make your
-                stay perfect.
+                Stay informed with live schedules, interact with exhibitors,
+                attend workshops, explore booth layouts, and experience events like never before.
               </p>
               <Link to={'/about'} className="btn btn-primary px-4 fw-semibold mt-2">
                 Learn More
@@ -115,8 +116,8 @@ const Index = () => {
             {/* RIGHT IMAGE */}
             <div className="col-lg-6">
               <img
-                src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/29/ce/5c/0d/indura-beach-golf-resort.jpg?w=1200&h=-1&s=1"
-                alt="Hotel"
+                src="https://performitlive.com/wp-content/uploads/2024/06/5-ways-to-transform-your-events-with-tech.jpg"
+                alt="Tech Expo"
                 className="img-fluid rounded shadow"
               />
             </div>
@@ -124,71 +125,77 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ================= ROOM TYPES PREVIEW ================= */}
+      {/* ================= EVENT TYPES PREVIEW ================= */}
       <section className="py-5 bg-light">
         <div className="container">
-          <h2 className="fw-bold text-center text-primary mb-4">Our Rooms</h2>
+          <h2 className="fw-bold text-center text-primary mb-4">Our Event Categories</h2>
           <p className="text-center text-secondary mb-5">
-            Choose from a variety of room categories designed to suit every need.
+            Explore a variety of tech-focused events designed for attendees, exhibitors, and industry leaders.
           </p>
 
           <div className="row g-4">
+
+            {/* CATEGORY 1 */}
             <div className="col-md-4">
               <div className="card border-0 shadow-sm h-100 room-card">
                 <img
-                  src="https://media.istockphoto.com/id/496859731/photo/modern-twin-room-interior.jpg?s=612x612&w=0&k=20&c=ZYrOwKJbbm-15fq0kxpCwlO0Lvg_OQhOyctsWgfonWw="
+                  src="https://blog.hyperiondev.com/wp-content/uploads/2019/02/Blog-Tech-Events.jpg"
                   className="card-img-top"
-                  alt="Single Room"
+                  alt="Tech Expo"
                 />
                 <div className="card-body">
-                  <h5 className="fw-bold">Single Room</h5>
+                  <h5 className="fw-bold">Tech Expos</h5>
                   <p className="text-secondary small">
-                    A cozy and comfortable room designed for solo travelers.
+                    Explore booths, meet exhibitors, and discover the latest breakthroughs in technology.
                   </p>
-                  <Link to={'/room-categories'} className="btn btn-outline-primary w-100">
-                    View Details
+                  <Link to={'/events'} className="btn btn-outline-primary w-100">
+                    See Expos
                   </Link>
                 </div>
               </div>
             </div>
 
+            {/* CATEGORY 2 */}
             <div className="col-md-4">
               <div className="card border-0 shadow-sm h-100 room-card">
                 <img
-                  src="https://www.glenmarie.com.my/wp-content/uploads/2024/02/Deluxe-Suite-3.jpg"
+                  src="https://cdn.prod.website-files.com/62151f08c425abd5e1b8c93c/623fcba4eca5267cca895a18_623005cbd50003231294dd39_622fddac68f0fb4b76ecfcdb_Dell-EMC-2017-8-of-19.webp"
                   className="card-img-top"
-                  alt="Deluxe Room"
+                  alt="Workshops"
                 />
                 <div className="card-body">
-                  <h5 className="fw-bold">Deluxe Room</h5>
+                  <h5 className="fw-bold">Workshops & Sessions</h5>
                   <p className="text-secondary small">
-                    Spacious room with premium interiors and great ambiance.
+                    Hands-on learning experiences conducted by industry experts and innovators.
                   </p>
-                  <Link to={'/room-categories'} className="btn btn-outline-primary w-100">
-                    View Details
+                  <Link to={'/events'} className="btn btn-outline-primary w-100">
+                    See Expos
                   </Link>
                 </div>
               </div>
             </div>
 
+            {/* CATEGORY 3 */}
             <div className="col-md-4">
               <div className="card border-0 shadow-sm h-100 room-card">
                 <img
-                  src="https://images.prismic.io/luxdeco-dev/NjlmZDU5ZDctYmFlOS00YTgyLWJiMTUtM2ZkMDQ2MzgwYTQ0_1552563901_palace-suite-kempinski-emirates-palace-the-most-expensive-hotels-rooms-around-the-world-luxdeco-style-guide.jpg?auto=compress,format&w=1200&q=100"
+                  src="https://www.arabnews.com/sites/default/files/styles/n_670_395/public/2024/04/19/4325511-803243270.jpg?itok=wUFu-zwD"
                   className="card-img-top"
-                  alt="Suite"
+                  alt="Startup Events"
                 />
                 <div className="card-body">
-                  <h5 className="fw-bold">Luxury Suite</h5>
+                  <h5 className="fw-bold">Startup Showcases</h5>
                   <p className="text-secondary small">
-                    A premium stay experience with luxury and comfort.
+                    A platform for startups to pitch, present innovations,
+                    and network with investors and industry leaders.
                   </p>
-                  <Link to={'/room-categories'} className="btn btn-outline-primary w-100">
-                    View Details
+                  <Link to={'/events'} className="btn btn-outline-primary w-100">
+                    See Expos
                   </Link>
                 </div>
               </div>
             </div>
+
           </div>
 
         </div>
@@ -197,12 +204,12 @@ const Index = () => {
       {/* ================= FOOTER ================= */}
       <footer className="bg-dark text-white py-4 mt-5">
         <div className="container text-center">
-          <h5 className="fw-bold mb-3">LuxuryStay Hotel</h5>
-          <p className="mb-1">123 Luxury Street, NewYork, USA</p>
+          <h5 className="fw-bold mb-3">EventSphere Management</h5>
+          <p className="mb-1">123 Innovation Avenue, Silicon Valley, USA</p>
           <p className="mb-1">Phone: 03123456789</p>
-          <p>Email: contact@luxurystay.com</p>
+          <p>Email: support@eventsphere.com</p>
           <p className="mt-3 small text-white-50">
-            © {new Date().getFullYear()} LuxuryStay Hotel. All rights reserved.
+            © {new Date().getFullYear()} EventSphere Management. All rights reserved.
           </p>
         </div>
       </footer>
@@ -210,7 +217,7 @@ const Index = () => {
       {/* ================= INTERNAL PAGE CSS ================= */}
       <style>{`
         .hero {
-          background: url('https://assets.insuremytrip.com/wp-content/uploads/2021/11/02144544/most_affordable_5_star_hotels_us.jpg') center/cover no-repeat;
+          background: url('https://images.tech.co/wp-content/uploads/2024/01/22094704/EPN_0539-3-1-e1705934863400.jpg') center/cover no-repeat;
           height: 75vh;
           position: relative;
         }
@@ -219,7 +226,7 @@ const Index = () => {
           content: "";
           position: absolute;
           inset: 0;
-          background: rgba(0, 0, 0, 0.55);
+          background: rgba(0, 25, 27, 0.74);
         }
 
         .hero .container {
