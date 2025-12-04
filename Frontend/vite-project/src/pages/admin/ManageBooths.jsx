@@ -194,145 +194,160 @@ const ManageBooths = () => {
     }
 
     return (
-        <div className="p-4">
-            {/* HEADER */}
-            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h4 className="fw-semibold text-secondary mb-0">Manage Booths</h4>
-                <Button variant="primary" onClick={() => setShowAddModal(true)}>
-                    <i className="bi bi-plus-circle me-2"></i> Add Booth
-                </Button>
+        <div className="manage-booths-page">
+            <div className="grid-wrapper">
+                <div className="grid-background"></div>
             </div>
+            <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
+                {/* HEADER */}
+                <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <h4 className="fw-semibold text-secondary mb-0">Manage Booths</h4>
+                    <Button variant="primary" onClick={() => setShowAddModal(true)}>
+                        <i className="bi bi-plus-circle me-2"></i> Add Booth
+                    </Button>
+                </div>
 
-            {/* EMPTY STATE */}
-            {booths.length === 0 && <p className="text-center text-muted">No booths found.</p>}
+                {/* EMPTY STATE */}
+                {booths.length === 0 && <p className="text-center text-muted">No booths found.</p>}
 
-            {/* BOOTHS GRID */}
-            <div className="row g-4">
-                {booths.map((b) => (
-                    <div className="col-12 col-md-6 col-lg-4" key={b._id}>
-                        <Card className="shadow-sm border-0 h-100 booth-card">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="d-flex justify-content-between">
-                                    <h5 className="fw-semibold">Booth {b.boothNumber}</h5>
-                                    <Badge bg={b.assignedTo ? "success" : "secondary"}>
-                                        {b.assignedTo ? "Assigned" : "Unassigned"}
-                                    </Badge>
-                                </div>
-                                <p className="text-muted small mt-2"><i className="bi bi-geo-alt me-2"></i>{b.location}</p>
-                                <p className="text-muted small mb-1"><i className="bi bi-shop me-2"></i>Expo: {b.expo?.name || "N/A"}</p>
-                                {b.assignedTo && <p className="text-muted small"><i className="bi bi-person-check me-2"></i>{b.assignedTo.organization}</p>}
+                {/* BOOTHS GRID */}
+                <div className="row g-4">
+                    {booths.map((b) => (
+                        <div className="col-12 col-md-6 col-lg-4" key={b._id}>
+                            <Card className="shadow-sm border-0 h-100 booth-card">
+                                <Card.Body className="d-flex flex-column">
+                                    <div className="d-flex justify-content-between">
+                                        <h5 className="fw-semibold">Booth {b.boothNumber}</h5>
+                                        <Badge bg={b.assignedTo ? "success" : "secondary"}>
+                                            {b.assignedTo ? "Assigned" : "Unassigned"}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-muted small mt-2"><i className="bi bi-geo-alt me-2"></i>{b.location}</p>
+                                    <p className="text-muted small mb-1"><i className="bi bi-shop me-2"></i>Expo: {b.expo?.name || "N/A"}</p>
+                                    {b.assignedTo && <p className="text-muted small"><i className="bi bi-person-check me-2"></i>{b.assignedTo.organization}</p>}
 
-                                {/* ACTION BUTTONS */}
-                                <div className="mt-auto d-flex justify-content-between">
-                                    <Button variant="outline-primary" size="sm" onClick={() => openEditModal(b)}>
-                                        <i className="bi bi-pencil"></i>
-                                    </Button>
-                                    <Button
-                                        variant="outline-danger"
-                                        size="sm"
-                                        onClick={() => { setCurrentBooth(b); setShowDeleteModal(true); }}
-                                        disabled={updatingId === b._id}
-                                    >
-                                        {updatingId === b._id ? <Spinner size="sm" animation="border" /> : <i className="bi bi-trash"></i>}
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </div>
-                ))}
-            </div>
+                                    {/* ACTION BUTTONS */}
+                                    <div className="mt-auto d-flex justify-content-between">
+                                        <Button variant="outline-primary" size="sm" onClick={() => openEditModal(b)}>
+                                            <i className="bi bi-pencil"></i>
+                                        </Button>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => { setCurrentBooth(b); setShowDeleteModal(true); }}
+                                            disabled={updatingId === b._id}
+                                        >
+                                            {updatingId === b._id ? <Spinner size="sm" animation="border" /> : <i className="bi bi-trash"></i>}
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
 
-            {/* ADD MODAL */}
-            <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add Booth</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleAddBooth}>
+                {/* ADD MODAL */}
+                <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Add Booth</Modal.Title>
+                    </Modal.Header>
+                    <Form onSubmit={handleAddBooth}>
+                        <Modal.Body>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Booth Number</Form.Label>
+                                <Form.Control name="boothNumber" value={formData.boothNumber} onChange={handleChange} required />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Location</Form.Label>
+                                <Form.Control name="location" value={formData.location} onChange={handleChange} required />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Select Expo</Form.Label>
+                                <Form.Select name="expo" value={formData.expo} onChange={handleChange} required>
+                                    <option value="">Select Expo</option>
+                                    {expos.map((expo) => <option key={expo._id} value={expo._id}>{expo.name}</option>)}
+                                </Form.Select>
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Assign Exhibitor (approved only)</Form.Label>
+                                <Form.Select name="assignedTo" value={formData.assignedTo} onChange={handleChange}>
+                                    <option value="">No assignment</option>
+                                    {exhibitors.map((ex) => <option key={ex._id} value={ex._id}>{ex.organization}</option>)}
+                                </Form.Select>
+                            </Form.Group>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                            <Button type="submit" variant="primary" disabled={updatingId === "add"}>{updatingId === "add" ? "Adding..." : "Add Booth"}</Button>
+                        </Modal.Footer>
+                    </Form>
+                </Modal>
+
+                {/* EDIT MODAL */}
+                <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Edit Booth</Modal.Title>
+                    </Modal.Header>
+                    <Form onSubmit={handleEditBooth}>
+                        <Modal.Body>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Booth Number</Form.Label>
+                                <Form.Control name="boothNumber" value={formData.boothNumber} onChange={handleChange} required />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Location</Form.Label>
+                                <Form.Control name="location" value={formData.location} onChange={handleChange} required />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Select Expo</Form.Label>
+                                <Form.Select name="expo" value={formData.expo} onChange={handleChange} required>
+                                    <option value="">Select Expo</option>
+                                    {expos.map((expo) => <option key={expo._id} value={expo._id}>{expo.name}</option>)}
+                                </Form.Select>
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Assign Exhibitor (approved only)</Form.Label>
+                                <Form.Select name="assignedTo" value={formData.assignedTo} onChange={handleChange}>
+                                    <option value="">No assignment</option>
+                                    {exhibitors.map((ex) => <option key={ex._id} value={ex._id}>{ex.organization}</option>)}
+                                </Form.Select>
+                            </Form.Group>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                            <Button type="submit" variant="primary" disabled={updatingId === currentBooth?._id}>
+                                {updatingId === currentBooth?._id ? "Updating..." : "Save Changes"}
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                </Modal>
+
+                {/* DELETE MODAL */}
+                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Delete Booth</Modal.Title>
+                    </Modal.Header>
                     <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Booth Number</Form.Label>
-                            <Form.Control name="boothNumber" value={formData.boothNumber} onChange={handleChange} required />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Location</Form.Label>
-                            <Form.Control name="location" value={formData.location} onChange={handleChange} required />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Select Expo</Form.Label>
-                            <Form.Select name="expo" value={formData.expo} onChange={handleChange} required>
-                                <option value="">Select Expo</option>
-                                {expos.map((expo) => <option key={expo._id} value={expo._id}>{expo.name}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Assign Exhibitor (approved only)</Form.Label>
-                            <Form.Select name="assignedTo" value={formData.assignedTo} onChange={handleChange}>
-                                <option value="">No assignment</option>
-                                {exhibitors.map((ex) => <option key={ex._id} value={ex._id}>{ex.organization}</option>)}
-                            </Form.Select>
-                        </Form.Group>
+                        Are you sure you want to delete booth <strong>{currentBooth?.boothNumber}</strong>?
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary" disabled={updatingId === "add"}>{updatingId === "add" ? "Adding..." : "Add Booth"}</Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-
-            {/* EDIT MODAL */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Booth</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleEditBooth}>
-                    <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Booth Number</Form.Label>
-                            <Form.Control name="boothNumber" value={formData.boothNumber} onChange={handleChange} required />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Location</Form.Label>
-                            <Form.Control name="location" value={formData.location} onChange={handleChange} required />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Select Expo</Form.Label>
-                            <Form.Select name="expo" value={formData.expo} onChange={handleChange} required>
-                                <option value="">Select Expo</option>
-                                {expos.map((expo) => <option key={expo._id} value={expo._id}>{expo.name}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Assign Exhibitor (approved only)</Form.Label>
-                            <Form.Select name="assignedTo" value={formData.assignedTo} onChange={handleChange}>
-                                <option value="">No assignment</option>
-                                {exhibitors.map((ex) => <option key={ex._id} value={ex._id}>{ex.organization}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary" disabled={updatingId === currentBooth?._id}>
-                            {updatingId === currentBooth?._id ? "Updating..." : "Save Changes"}
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDeleteBooth} disabled={updatingId === currentBooth?._id}>
+                            {updatingId === currentBooth?._id ? "Deleting..." : "Delete"}
                         </Button>
                     </Modal.Footer>
-                </Form>
-            </Modal>
-
-            {/* DELETE MODAL */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Delete Booth</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete booth <strong>{currentBooth?.boothNumber}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-                    <Button variant="danger" onClick={handleDeleteBooth} disabled={updatingId === currentBooth?._id}>
-                        {updatingId === currentBooth?._id ? "Deleting..." : "Delete"}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                </Modal>
+            </div>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
 
             <style>{`
                 .booth-card {
@@ -349,6 +364,35 @@ const ManageBooths = () => {
                 }
                 .btn:hover {
                   transform: translateY(-2px);
+                }
+
+                .grid-wrapper {
+                min-height: 100%;
+                width: 100%;
+                position: relative;
+                z-index: 0;
+                }
+
+                .grid-background {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                z-index: 0;
+                background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+                    linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+                background-size: 40px 60px;
+                -webkit-mask-image: radial-gradient(
+                    ellipse 70% 60% at 50% 30%,
+                    #000 60%,
+                    transparent 100%
+                );
+                mask-image: radial-gradient(
+                    ellipse 70% 60% at 50% 30%,
+                    #000 60%,
+                    transparent 100%
+                );
                 }
             `}</style>
         </div>

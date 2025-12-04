@@ -44,6 +44,7 @@ const Register = () => {
 
   return (
     <div className='register-page'>
+      <div className="bg fixed"></div>
       {/* ================= NAVBAR ================= */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
         <div className="container">
@@ -189,6 +190,18 @@ const Register = () => {
           border-color: #1099a8ff !important;
         }
         .btn-primary:hover { background-color: #0d7480ff !important; }
+        .bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        
+        background-color: #e6eef7;
+        opacity: 0.1;
+        background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #e6eef7 40px ), repeating-linear-gradient( #45aaf755, #45aaf7 );
+      }
       `}</style>
     </div>
   );

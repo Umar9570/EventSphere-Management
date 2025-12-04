@@ -474,7 +474,10 @@ const OrganizerChat = () => {
                                                 paddingRight: "1rem",
                                                 display: "flex",
                                                 flexDirection: "column",
+                                                border: "1px solid #3b3b3b23",
+                                                borderRadius: "15px",
                                             }}
+                                            className="shadow-sm px-3"
                                         >
                                             {!selectedChat ? (
                                                 <div className="d-flex justify-content-center align-items-center flex-grow-1 text-muted" style={{ fontSize: "1.1rem" }}>
@@ -542,6 +545,16 @@ const OrganizerChat = () => {
                     </Col>
                 </Row>
             </Container>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
 
             <style>{`
                 .send{

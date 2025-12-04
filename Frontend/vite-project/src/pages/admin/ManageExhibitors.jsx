@@ -80,154 +80,169 @@ const ManageExhibitors = () => {
     };
 
     return (
-        <div className="p-4">
-            {/* Header */}
-            <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-                <h4 className="fw-semibold text-secondary mb-0">
-                    Exhibitor Applications
-                </h4>
-
-                <Button
-                    variant="primary"
-                    className="d-flex align-items-center"
-                    onClick={fetchApplications}
-                >
-                    <i className="bi bi-arrow-clockwise me-2"></i>Refresh
-                </Button>
+        <div className="manage-exhibitors-page">
+            <div className="grid-wrapper">
+                <div className="grid-background"></div>
             </div>
+            <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
+                {/* Header */}
+                <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                    <h4 className="fw-semibold text-secondary mb-0">
+                        Exhibitor Applications
+                    </h4>
 
-            {/* Error Alert */}
-            {errorMessage && (
-                <Alert variant="danger" dismissible onClose={() => setErrorMessage("")}>
-                    {errorMessage}
-                </Alert>
-            )}
-
-            {/* Loading */}
-            {loading && (
-                <div className="text-center py-5">
-                    <Spinner animation="border" />
-                    <p className="text-muted mt-2">Loading exhibitor applications...</p>
+                    <Button
+                        variant="primary"
+                        className="d-flex align-items-center"
+                        onClick={fetchApplications}
+                    >
+                        <i className="bi bi-arrow-clockwise me-2"></i>Refresh
+                    </Button>
                 </div>
-            )}
 
-            {/* Empty State */}
-            {!loading && applications.length === 0 && (
-                <p className="text-center text-muted">
-                    No exhibitor applications found.
-                </p>
-            )}
+                {/* Error Alert */}
+                {errorMessage && (
+                    <Alert variant="danger" dismissible onClose={() => setErrorMessage("")}>
+                        {errorMessage}
+                    </Alert>
+                )}
 
-            {/* Cards Grid */}
-            <div className="row g-4">
-                {applications.map((ex) => (
-                    <div key={ex._id} className="col-12 col-md-6 col-lg-4">
-                        <Card className="shadow-sm border-0 h-100">
-                            <Card.Body className="d-flex flex-column">
+                {/* Loading */}
+                {loading && (
+                    <div className="text-center py-5">
+                        <Spinner animation="border" />
+                        <p className="text-muted mt-2">Loading exhibitor applications...</p>
+                    </div>
+                )}
 
-                                {/* HEADER */}
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 className="fw-semibold mb-1 text-dark">
-                                            {ex.firstName} {ex.lastName}
-                                        </h6>
-                                        <p className="text-muted small mb-0">{ex.email}</p>
+                {/* Empty State */}
+                {!loading && applications.length === 0 && (
+                    <p className="text-center text-muted">
+                        No exhibitor applications found.
+                    </p>
+                )}
+
+                {/* Cards Grid */}
+                <div className="row g-4">
+                    {applications.map((ex) => (
+                        <div key={ex._id} className="col-12 col-md-6 col-lg-4">
+                            <Card className="shadow-sm border-0 h-100">
+                                <Card.Body className="d-flex flex-column">
+
+                                    {/* HEADER */}
+                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 className="fw-semibold mb-1 text-dark">
+                                                {ex.firstName} {ex.lastName}
+                                            </h6>
+                                            <p className="text-muted small mb-0">{ex.email}</p>
+                                        </div>
+
+                                        <Badge
+                                            bg={statusBadgeColor(ex.status)}
+                                            className="text-capitalize px-2 py-1"
+                                        >
+                                            {ex.status}
+                                        </Badge>
                                     </div>
 
-                                    <Badge
-                                        bg={statusBadgeColor(ex.status)}
-                                        className="text-capitalize px-2 py-1"
-                                    >
-                                        {ex.status}
-                                    </Badge>
-                                </div>
+                                    {/* Organization */}
+                                    <p className="text-dark small mb-1">
+                                        <i className="bi bi-building me-2"></i>
+                                        Organization: {ex.organization}
+                                    </p>
 
-                                {/* Organization */}
-                                <p className="text-dark small mb-1">
-                                    <i className="bi bi-building me-2"></i>
-                                    Organization: {ex.organization}
-                                </p>
+                                    {/* Bio */}
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-person-lines-fill me-2"></i>
+                                        Bio: {ex.bio}
+                                    </p>
 
-                                {/* Bio */}
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-person-lines-fill me-2"></i>
-                                    Bio: {ex.bio}
-                                </p>
+                                    {/* Booth Number */}
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-grid-1x2 me-2"></i>
+                                        Booth: {ex.boothNumber}
+                                    </p>
 
-                                {/* Booth Number */}
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-grid-1x2 me-2"></i>
-                                    Booth: {ex.boothNumber}
-                                </p>
+                                    {/* Expo */}
+                                    <p className="text-secondary small mb-2">
+                                        <i className="bi bi-easel3 me-2"></i>
+                                        Expo: {ex.expoName}
+                                    </p>
 
-                                {/* Expo */}
-                                <p className="text-secondary small mb-2">
-                                    <i className="bi bi-easel3 me-2"></i>
-                                    Expo: {ex.expoName}
-                                </p>
+                                    {/* Application Date */}
+                                    <p className="text-muted small mb-3">
+                                        <i className="bi bi-calendar-event me-2"></i>
+                                        Applied on:{" "}
+                                        {new Date(ex.createdAt).toLocaleDateString("en-GB")}
+                                    </p>
 
-                                {/* Application Date */}
-                                <p className="text-muted small mb-3">
-                                    <i className="bi bi-calendar-event me-2"></i>
-                                    Applied on:{" "}
-                                    {new Date(ex.createdAt).toLocaleDateString("en-GB")}
-                                </p>
+                                    {/* ACTION BUTTONS */}
+                                    <div className="mt-auto d-flex gap-2">
+                                        {ex.status === "pending" && (
+                                            <>
+                                                {/* APPROVE */}
+                                                <Button
+                                                    variant="success"
+                                                    size="sm"
+                                                    className="w-100"
+                                                    disabled={updatingId === ex._id}
+                                                    onClick={() => updateStatus(ex._id, "approved")}
+                                                >
+                                                    {updatingId === ex._id ? (
+                                                        <Spinner size="sm" animation="border" className="me-1" />
+                                                    ) : (
+                                                        <i className="bi bi-check-circle me-1"></i>
+                                                    )}
+                                                    Approve
+                                                </Button>
 
-                                {/* ACTION BUTTONS */}
-                                <div className="mt-auto d-flex gap-2">
-                                    {ex.status === "pending" && (
-                                        <>
-                                            {/* APPROVE */}
+                                                {/* REJECT */}
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    className="w-100"
+                                                    disabled={updatingId === ex._id}
+                                                    onClick={() => updateStatus(ex._id, "rejected")}
+                                                >
+                                                    {updatingId === ex._id ? (
+                                                        <Spinner size="sm" animation="border" className="me-1" />
+                                                    ) : (
+                                                        <i className="bi bi-x-circle me-1"></i>
+                                                    )}
+                                                    Reject
+                                                </Button>
+                                            </>
+                                        )}
+
+                                        {ex.status !== "pending" && (
                                             <Button
-                                                variant="success"
+                                                variant="outline-secondary"
                                                 size="sm"
                                                 className="w-100"
-                                                disabled={updatingId === ex._id}
-                                                onClick={() => updateStatus(ex._id, "approved")}
+                                                disabled
                                             >
-                                                {updatingId === ex._id ? (
-                                                    <Spinner size="sm" animation="border" className="me-1" />
-                                                ) : (
-                                                    <i className="bi bi-check-circle me-1"></i>
-                                                )}
-                                                Approve
+                                                <i className="bi bi-check2-all me-1"></i>
+                                                {ex.status === "approved" ? "Approved" : "Rejected"}
                                             </Button>
-
-                                            {/* REJECT */}
-                                            <Button
-                                                variant="outline-danger"
-                                                size="sm"
-                                                className="w-100"
-                                                disabled={updatingId === ex._id}
-                                                onClick={() => updateStatus(ex._id, "rejected")}
-                                            >
-                                                {updatingId === ex._id ? (
-                                                    <Spinner size="sm" animation="border" className="me-1" />
-                                                ) : (
-                                                    <i className="bi bi-x-circle me-1"></i>
-                                                )}
-                                                Reject
-                                            </Button>
-                                        </>
-                                    )}
-
-                                    {ex.status !== "pending" && (
-                                        <Button
-                                            variant="outline-secondary"
-                                            size="sm"
-                                            className="w-100"
-                                            disabled
-                                        >
-                                            <i className="bi bi-check2-all me-1"></i>
-                                            {ex.status === "approved" ? "Approved" : "Rejected"}
-                                        </Button>
-                                    )}
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </div>
-                ))}
+                                        )}
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
             </div>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
 
             {/* Styles */}
             <style>{`
@@ -248,6 +263,35 @@ const ManageExhibitors = () => {
         }
         .btn:hover:not(:disabled) {
           transform: translateY(-2px);
+        }
+
+        .grid-wrapper {
+        min-height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
+        }
+
+        .grid-background {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+        background-size: 40px 60px;
+        -webkit-mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
         }
       `}</style>
         </div>

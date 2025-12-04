@@ -100,8 +100,10 @@ export default function Profile() {
     return (
         <>
             <div className="wrapper">
-
-                <div className="content-page">
+                <div className="grid-wrapper">
+                    <div className="grid-background"></div>
+                </div>
+                <div className="content-page" style={{ position: "relative", zIndex: 10 }}>
                     <div className="content">
 
                         <div className="container-fluid">
@@ -148,7 +150,7 @@ export default function Profile() {
                             {/* SETTINGS */}
                             <div className="row mt-5">
                                 <div className="col-sm-12">
-                                    <div className="card p-0">
+                                    <div className="card p-0 bg-light shadow-sm">
                                         <div className="card-body p-0">
                                             <div className="profile-content">
 
@@ -376,6 +378,36 @@ export default function Profile() {
 
                 .btn-primary:hover{
                     background-color: #0d7480ff !important;
+                }
+
+
+                .grid-wrapper {
+                min-height: 100%;
+                width: 100%;
+                position: relative;
+                z-index: 0;
+                }
+
+                .grid-background {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                z-index: 0;
+                background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+                    linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+                background-size: 40px 60px;
+                -webkit-mask-image: radial-gradient(
+                    ellipse 70% 60% at 50% 30%,
+                    #000 60%,
+                    transparent 100%
+                );
+                mask-image: radial-gradient(
+                    ellipse 70% 60% at 50% 30%,
+                    #000 60%,
+                    transparent 100%
+                );
                 }
             `}</style>
         </>

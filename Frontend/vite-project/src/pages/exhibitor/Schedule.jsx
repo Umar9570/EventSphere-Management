@@ -77,58 +77,73 @@ const ExhibitorSchedule = () => {
     }
 
     return (
-        <div className="exhibitor-schedule">
-            <div className="col-sm-12 mb-5">
-                <div
-                    className="profile-bg-picture"
-                    style={{
-                        backgroundImage: "url('https://media.istockphoto.com/id/1353476783/vector/abstract-teal-circles-background.jpg?s=612x612&w=0&k=20&c=twp8lq5iWEUJ3Wzkp4HGnF89WxDKG--ZKTofQtFop7M=')",
-                    }}
-                >
-                    <span className="picture-bg-overlay"></span>
+        <div className="exhibitor-schedule-page">
+            <div className="grid-wrapper">
+                <div className="grid-background"></div>
+            </div>
 
-                    <div className="centered-title fs-1">
-                        Stay Updated
+            <div className="exhibitor-schedule" style={{ position: "relative", zIndex: 10 }}>
+                <div className="col-sm-12 mb-5" >
+                    <div
+                        className="profile-bg-picture"
+                        style={{
+                            backgroundImage: "url('https://media.istockphoto.com/id/1353476783/vector/abstract-teal-circles-background.jpg?s=612x612&w=0&k=20&c=twp8lq5iWEUJ3Wzkp4HGnF89WxDKG--ZKTofQtFop7M=')",
+                        }}
+                    >
+                        <span className="picture-bg-overlay"></span>
+
+                        <div className="centered-title fs-1">
+                            Stay Updated
+                        </div>
                     </div>
                 </div>
-            </div>
-            <h4 className="fw-semibold text-secondary mb-4">Expo Schedule</h4>
+                <h4 className="fw-semibold text-secondary mb-4">Expo Schedule</h4>
 
-            {error && (
-                <Alert variant="danger" onClose={() => setError("")} dismissible>
-                    {error}
-                </Alert>
-            )}
+                {error && (
+                    <Alert variant="danger" onClose={() => setError("")} dismissible>
+                        {error}
+                    </Alert>
+                )}
 
-            {!schedule.length && !error && (
-                <p className="text-center text-muted">No schedule available.</p>
-            )}
+                {!schedule.length && !error && (
+                    <p className="text-center text-muted">No schedule available.</p>
+                )}
 
-            {schedule.length > 0 && (
-                <div className="table-responsive">
-                    <Table striped bordered hover>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {schedule.map((item) => (
-                                <tr key={item._id}>
-                                    <td>{item.title}</td>
-                                    <td>{item.description || "-"}</td>
-                                    <td>{new Date(item.date).toLocaleDateString()}</td>
-                                    <td>{item.startTime} - {item.endTime}</td>
+                {schedule.length > 0 && (
+                    <div className="table-responsive">
+                        <Table striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </div>
-            )}
-
+                            </thead>
+                            <tbody>
+                                {schedule.map((item) => (
+                                    <tr key={item._id}>
+                                        <td>{item.title}</td>
+                                        <td>{item.description || "-"}</td>
+                                        <td>{new Date(item.date).toLocaleDateString()}</td>
+                                        <td>{item.startTime} - {item.endTime}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </div>
+                )}
+            </div>
+                {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
             <style>{`
         .exhibitor-schedule h4 { color: #0f172a; }
         .table-responsive { margin-bottom: 1rem; }
@@ -158,6 +173,36 @@ const ExhibitorSchedule = () => {
             z-index: 2;
             text-align: center;
         }  
+
+
+        .grid-wrapper {
+        min-height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
+        }
+
+        .grid-background {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+        background-size: 40px 60px;
+        -webkit-mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        }
       `}</style>
         </div>
     );

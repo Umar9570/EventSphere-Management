@@ -520,7 +520,10 @@ const ExhibitorChat = () => {
                                                 paddingRight: "1rem",
                                                 display: "flex",
                                                 flexDirection: "column",
+                                                border: "1px solid #3b3b3b23",
+                                                borderRadius: "15px",
                                             }}
+                                            className="shadow-sm px-3"
                                         >
                                             {!selectedChat ? (
                                                 <div
@@ -642,6 +645,16 @@ const ExhibitorChat = () => {
                     </Col>
                 </Row>
             </Container>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
 
             <style>{`
                 .send{ color: #fff !important; border-radius: 50%; } 

@@ -97,7 +97,10 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard">
-            <div className="col-sm-12 mb-5">
+            <div className="grid-wrapper">
+                <div className="grid-background"></div>
+            </div>
+            <div className="col-sm-12 mb-5" style={{ position: "relative", zIndex: 10 }}>
                 <div
                     className="profile-bg-picture"
                     style={{
@@ -211,6 +214,16 @@ const AdminDashboard = () => {
                     </Card>
                 </Col>
             </Row>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
             {/* Inline styles */}
             <style>{`
         .stat-card {
@@ -248,6 +261,35 @@ const AdminDashboard = () => {
             font-weight: 700;
             z-index: 2;
             text-align: center;
+        }
+
+        .grid-wrapper {
+        min-height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
+        }
+
+        .grid-background {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+        background-size: 40px 60px;
+        -webkit-mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
         }
       `}</style>
         </div>

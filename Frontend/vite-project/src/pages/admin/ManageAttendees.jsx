@@ -113,61 +113,106 @@ const ManageAttendees = () => {
         );
 
     return (
-        <div className="p-4">
-            <h4 className="fw-semibold mb-4">All Attendees</h4>
+        <div className="manage-attendee-page">
+            <div className="grid-wrapper">
+                <div className="grid-background"></div>
+            </div>
+            <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
+                <h4 className="fw-semibold mb-4">All Attendees</h4>
 
-            <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-                {attendees.map((att) => (
-                    <Col key={att._id}>
-                        <Card className="shadow-sm border-0 h-100 attendee-card">
-                            <Card.Body>
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <h6 className="fw-bold">
-                                        {att.firstName} {att.lastName}
-                                    </h6>
+                <Row xs={1} sm={2} md={3} lg={4} className="g-4">
+                    {attendees.map((att) => (
+                        <Col key={att._id}>
+                            <Card className="shadow-sm border-0 h-100 attendee-card">
+                                <Card.Body>
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <h6 className="fw-bold">
+                                            {att.firstName} {att.lastName}
+                                        </h6>
 
-                                    <Badge bg={att.status === "Attended" ? "success" : "secondary"}>
-                                        {att.status}
-                                    </Badge>
+                                        <Badge bg={att.status === "Attended" ? "success" : "secondary"}>
+                                            {att.status}
+                                        </Badge>
+                                    </div>
+
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-envelope me-1"></i>
+                                        {att.email}
+                                    </p>
+
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-telephone me-1"></i>
+                                        {att.phone}
+                                    </p>
+
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-ticket-detailed me-1"></i>
+                                        Events Attended: {att.attendedEvents}
+                                    </p>
+
+                                    <div className="d-flex justify-content-end mt-3">
+                                        <Button
+                                            size="sm"
+                                            variant="outline-primary"
+                                            className="me-2"
+                                            onClick={() => openEditModal(att)}
+                                        >
+                                            <i className="bi bi-pencil"></i>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline-danger"
+                                            onClick={() => openDeleteModal(att)}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            </div>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
                                 </div>
+                            </div>
+                        </div>
+                    </footer>
+            <style>{`
+        .grid-wrapper {
+        min-height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
+        }
 
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-envelope me-1"></i>
-                                    {att.email}
-                                </p>
-
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-telephone me-1"></i>
-                                    {att.phone}
-                                </p>
-
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-ticket-detailed me-1"></i>
-                                    Events Attended: {att.attendedEvents}
-                                </p>
-
-                                <div className="d-flex justify-content-end mt-3">
-                                    <Button
-                                        size="sm"
-                                        variant="outline-primary"
-                                        className="me-2"
-                                        onClick={() => openEditModal(att)}
-                                    >
-                                        <i className="bi bi-pencil"></i>
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="outline-danger"
-                                        onClick={() => openDeleteModal(att)}
-                                    >
-                                        <i className="bi bi-trash"></i>
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+        .grid-background {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+        background-size: 40px 60px;
+        -webkit-mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        }
+      `}</style>
         </div>
     );
 };

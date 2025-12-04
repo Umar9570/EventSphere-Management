@@ -171,273 +171,288 @@ const ManageSchedule = () => {
         );
 
     return (
-        <div className="p-4">
-            {/* Page Header */}
-            <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-                <h4 className="fw-semibold text-secondary mb-0">Manage Schedule</h4>
-                <Button variant="primary" onClick={openAddModal}>
-                    <i className="bi bi-plus-lg me-2"></i> Add Session
-                </Button>
+        <div className="manage-schedule-page">
+            <div className ="grid-wrapper">
+                <div className="grid-background"></div>
             </div>
+            <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
+                {/* Page Header */}
+                <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                    <h4 className="fw-semibold text-secondary mb-0">Manage Schedule</h4>
+                    <Button variant="primary" onClick={openAddModal}>
+                        <i className="bi bi-plus-lg me-2"></i> Add Session
+                    </Button>
+                </div>
 
-            {/* Error Alert */}
-            {errorMessage && (
-                <Alert variant="danger" onClose={() => setErrorMessage("")} dismissible>
-                    {errorMessage}
-                </Alert>
-            )}
-
-            {/* Sessions Cards */}
-            <div className="row g-4">
-                {scheduleList.length === 0 && (
-                    <p className="text-center text-muted">No sessions added yet.</p>
+                {/* Error Alert */}
+                {errorMessage && (
+                    <Alert variant="danger" onClose={() => setErrorMessage("")} dismissible>
+                        {errorMessage}
+                    </Alert>
                 )}
-                {scheduleList.map((session) => (
-                    <div key={session._id} className="col-12 col-md-6 col-lg-4">
-                        <Card className="shadow-sm border-0 h-100">
-                            <Card.Body className="d-flex flex-column">
-                                {/* Header */}
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 className="fw-semibold mb-1 text-dark">{session.title}</h6>
-                                        <p className="text-muted small mb-0">Expo: {session.expo?.name}</p>
+
+                {/* Sessions Cards */}
+                <div className="row g-4">
+                    {scheduleList.length === 0 && (
+                        <p className="text-center text-muted">No sessions added yet.</p>
+                    )}
+                    {scheduleList.map((session) => (
+                        <div key={session._id} className="col-12 col-md-6 col-lg-4">
+                            <Card className="shadow-sm border-0 h-100">
+                                <Card.Body className="d-flex flex-column">
+                                    {/* Header */}
+                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 className="fw-semibold mb-1 text-dark">{session.title}</h6>
+                                            <p className="text-muted small mb-0">Expo: {session.expo?.name}</p>
+                                        </div>
+                                        <Badge bg="info" className="text-capitalize px-2 py-1">
+                                            {new Date(session.date).toLocaleDateString("en-GB")}
+                                        </Badge>
                                     </div>
-                                    <Badge bg="info" className="text-capitalize px-2 py-1">
-                                        {new Date(session.date).toLocaleDateString("en-GB")}
-                                    </Badge>
-                                </div>
 
-                                {/* Description */}
-                                <p className="text-secondary small mb-2">{session.description}</p>
+                                    {/* Description */}
+                                    <p className="text-secondary small mb-2">{session.description}</p>
 
-                                {/* Time */}
-                                <p className="text-muted small mb-3">
-                                    {session.startTime} - {session.endTime}
-                                </p>
+                                    {/* Time */}
+                                    <p className="text-muted small mb-3">
+                                        {session.startTime} - {session.endTime}
+                                    </p>
 
-                                {/* Action Buttons */}
-                                <div className="mt-auto d-flex justify-content-between">
-                                    <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        className="me-2"
-                                        onClick={() => openEditModal(session)}
-                                    >
-                                        <i className="bi bi-pencil"></i>
-                                    </Button>
-                                    <Button
-                                        variant="outline-danger"
-                                        size="sm"
-                                        onClick={() => openDeleteModal(session)}
-                                    >
-                                        <i className="bi bi-trash"></i>
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </div>
-                ))}
-            </div>
+                                    {/* Action Buttons */}
+                                    <div className="mt-auto d-flex justify-content-between">
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => openEditModal(session)}
+                                        >
+                                            <i className="bi bi-pencil"></i>
+                                        </Button>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => openDeleteModal(session)}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
 
-            {/* ----------------- ADD SESSION MODAL ----------------- */}
-            <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add Session</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleAddSession}>
-                    <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Title</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Description</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Expo</Form.Label>
-                            <Form.Select
-                                name="expo"
-                                value={formData.expo}
-                                onChange={handleChange}
-                                required
+                {/* ----------------- ADD SESSION MODAL ----------------- */}
+                <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Add Session</Modal.Title>
+                    </Modal.Header>
+                    <Form onSubmit={handleAddSession}>
+                        <Modal.Body>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Title</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Description</Form.Label>
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Expo</Form.Label>
+                                <Form.Select
+                                    name="expo"
+                                    value={formData.expo}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Select Expo</option>
+                                    {expos.map((expo) => (
+                                        <option key={expo._id} value={expo._id}>
+                                            {expo.name}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </Form.Group>
+                            <Row>
+                                <Form.Group className="mb-3 col-6">
+                                    <Form.Label>Date</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        name="date"
+                                        value={formData.date}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3 col-3">
+                                    <Form.Label>Start Time</Form.Label>
+                                    <Form.Control
+                                        type="time"
+                                        name="startTime"
+                                        value={formData.startTime}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3 col-3">
+                                    <Form.Label>End Time</Form.Label>
+                                    <Form.Control
+                                        type="time"
+                                        name="endTime"
+                                        value={formData.endTime}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Row>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" variant="primary" disabled={updatingId === "add"}>
+                                {updatingId === "add" ? "Adding..." : "Add Session"}
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                </Modal>
+
+                {/* ----------------- EDIT SESSION MODAL ----------------- */}
+                <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Edit Session</Modal.Title>
+                    </Modal.Header>
+                    <Form onSubmit={handleEditSession}>
+                        <Modal.Body>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Title</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Description</Form.Label>
+                                <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Expo</Form.Label>
+                                <Form.Select
+                                    name="expo"
+                                    value={formData.expo}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Select Expo</option>
+                                    {expos.map((expo) => (
+                                        <option key={expo._id} value={expo._id}>
+                                            {expo.name}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </Form.Group>
+                            <Row>
+                                <Form.Group className="mb-3 col-6">
+                                    <Form.Label>Date</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        name="date"
+                                        value={formData.date}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3 col-3">
+                                    <Form.Label>Start Time</Form.Label>
+                                    <Form.Control
+                                        type="time"
+                                        name="startTime"
+                                        value={formData.startTime}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3 col-3">
+                                    <Form.Label>End Time</Form.Label>
+                                    <Form.Control
+                                        type="time"
+                                        name="endTime"
+                                        value={formData.endTime}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Row>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={updatingId === currentSession?._id}
                             >
-                                <option value="">Select Expo</option>
-                                {expos.map((expo) => (
-                                    <option key={expo._id} value={expo._id}>
-                                        {expo.name}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Row>
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>Date</Form.Label>
-                                <Form.Control
-                                    type="date"
-                                    name="date"
-                                    value={formData.date}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-3 col-3">
-                                <Form.Label>Start Time</Form.Label>
-                                <Form.Control
-                                    type="time"
-                                    name="startTime"
-                                    value={formData.startTime}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-3 col-3">
-                                <Form.Label>End Time</Form.Label>
-                                <Form.Control
-                                    type="time"
-                                    name="endTime"
-                                    value={formData.endTime}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                        </Row>
+                                {updatingId === currentSession?._id ? "Updating..." : "Update Session"}
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                </Modal>
+
+                {/* ----------------- DELETE SESSION MODAL ----------------- */}
+                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Delete</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Are you sure you want to delete session "{sessionToDelete?.title}"?
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowAddModal(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" variant="primary" disabled={updatingId === "add"}>
-                            {updatingId === "add" ? "Adding..." : "Add Session"}
-                        </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-
-            {/* ----------------- EDIT SESSION MODAL ----------------- */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Session</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleEditSession}>
-                    <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Title</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Description</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Expo</Form.Label>
-                            <Form.Select
-                                name="expo"
-                                value={formData.expo}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Select Expo</option>
-                                {expos.map((expo) => (
-                                    <option key={expo._id} value={expo._id}>
-                                        {expo.name}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Row>
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>Date</Form.Label>
-                                <Form.Control
-                                    type="date"
-                                    name="date"
-                                    value={formData.date}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-3 col-3">
-                                <Form.Label>Start Time</Form.Label>
-                                <Form.Control
-                                    type="time"
-                                    name="startTime"
-                                    value={formData.startTime}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                            <Form.Group className="mb-3 col-3">
-                                <Form.Label>End Time</Form.Label>
-                                <Form.Control
-                                    type="time"
-                                    name="endTime"
-                                    value={formData.endTime}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </Form.Group>
-                        </Row>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
                             Cancel
                         </Button>
                         <Button
-                            type="submit"
-                            variant="primary"
-                            disabled={updatingId === currentSession?._id}
+                            variant="danger"
+                            onClick={handleDeleteSession}
+                            disabled={updatingId === sessionToDelete?._id}
                         >
-                            {updatingId === currentSession?._id ? "Updating..." : "Update Session"}
+                            {updatingId === sessionToDelete?._id ? "Deleting..." : "Delete"}
                         </Button>
                     </Modal.Footer>
-                </Form>
-            </Modal>
-
-            {/* ----------------- DELETE SESSION MODAL ----------------- */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Delete</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete session "{sessionToDelete?.title}"?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleDeleteSession}
-                        disabled={updatingId === sessionToDelete?._id}
-                    >
-                        {updatingId === sessionToDelete?._id ? "Deleting..." : "Delete"}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                </Modal>
+            </div>
+            {/* FOOTER */}
+                    <footer className="footer mt-5 pt-5">
+                        <div className="container-fluid">
+                            <div className="row">
+                                <div className="col-12 text-center">
+                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
 
             {/* Styles */}
             <style>{`
@@ -458,6 +473,35 @@ const ManageSchedule = () => {
         }
         .btn:hover {
           transform: translateY(-2px);
+        }
+
+        .grid-wrapper {
+        min-height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0;
+        }
+
+        .grid-background {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+        background-size: 40px 60px;
+        -webkit-mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
+        mask-image: radial-gradient(
+            ellipse 70% 60% at 50% 30%,
+            #000 60%,
+            transparent 100%
+        );
         }
       `}</style>
         </div>
