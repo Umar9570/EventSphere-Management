@@ -1,170 +1,289 @@
-import { useState, useContext } from 'react';
+import React, { useState, useContext } from 'react';
+import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
-import "bootstrap/dist/css/bootstrap.min.css";
+import { 
+  FaEnvelope, 
+  FaLock, 
+  FaEye,
+  FaEyeSlash,
+  FaGoogle,
+  FaLinkedin,
+  FaCalendarAlt,
+  FaSignInAlt,
+  FaCheckCircle,
+  FaExclamationCircle
+} from 'react-icons/fa';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+    if (loginError) {
+      setLoginError('');
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    const res = await login(email, password);
-    setLoading(false);
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setLoginError('');
+
+    const res = await login(formData.email, formData.password);
+    setIsLoading(false);
 
     if (res.status) {
+      setLoginSuccess(true);
       toast.success('Login successful');
-      if (res.user.role === 'organizer') navigate('/dashboard');
-      else if (res.user.role === 'exhibitor') navigate('/all-expos');
-      else navigate('/home');
+      
+      // Navigate based on user role
+      if (res.user.role === 'organizer') {
+        navigate('/dashboard');
+      } else if (res.user.role === 'exhibitor') {
+        navigate('/all-expos');
+      } else {
+        navigate('/home');
+      }
     } else {
+      setLoginError(res.message);
       toast.error(res.message);
     }
   };
 
   return (
-    <div className='login-page'>
-      <div className="bg fixed"></div>
-      {/* ================= NAVBAR ================= */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
-        <div className="container">
-          <a className="navbar-brand fw-bold text-primary fs-4" href="#">
-            <i className="bi bi-building me-2"></i>EventSphere
-          </a>
+    <div className="login-page">
+      <Container>
+        <Row className="justify-content-center">
+          <Col lg={10} xl={9}>
+            <div className="login-card glass-card-strong">
+              <Row className="g-0">
+                {/* Sidebar */}
+                <Col lg={5} className="login-sidebar">
+                  <div className="login-sidebar-content">
+                    <div className="d-flex align-items-center mb-4">
+                      <h4 className="mb-0 ms-0 fw-bold text-white">EventSphere</h4>
+                    </div>
+                    <h2 className="login-sidebar-title mb-3">Welcome Back!</h2>
+                    <p className="login-sidebar-text mb-5">
+                      Sign in to access your dashboard, manage events, and connect with the community.
+                    </p>
+                    
+                    {/* Features List */}
+                    <div className="login-features">
+                      <div className="login-feature-item">
+                        <div className="login-feature-icon">
+                          <FaCheckCircle />
+                        </div>
+                        <div className="login-feature-text">
+                          <span>Access your personalized dashboard</span>
+                        </div>
+                      </div>
+                      <div className="login-feature-item">
+                        <div className="login-feature-icon">
+                          <FaCheckCircle />
+                        </div>
+                        <div className="login-feature-text">
+                          <span>Manage event registrations</span>
+                        </div>
+                      </div>
+                      <div className="login-feature-item">
+                        <div className="login-feature-icon">
+                          <FaCheckCircle />
+                        </div>
+                        <div className="login-feature-text">
+                          <span>Connect with exhibitors & attendees</span>
+                        </div>
+                      </div>
+                      <div className="login-feature-item">
+                        <div className="login-feature-icon">
+                          <FaCheckCircle />
+                        </div>
+                        <div className="login-feature-text">
+                          <span>Real-time notifications & updates</span>
+                        </div>
+                      </div>
+                    </div>
 
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#clientNavbar"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
+                    {/* Decorative Elements */}
+                    <div className="login-sidebar-decoration">
+                      <div className="decoration-circle decoration-circle-1"></div>
+                      <div className="decoration-circle decoration-circle-2"></div>
+                    </div>
+                  </div>
+                </Col>
 
-          <div className="collapse navbar-collapse" id="clientNavbar">
-            <ul className="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-4">
-              <li className="nav-item">
-                <Link to={'/'} className="nav-link fw-semibold">
-                  Home
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/room-categories'} className="nav-link fw-semibold">
-                  Rooms
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/about'} className="nav-link fw-semibold">
-                  About
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/contact'} className="nav-link fw-semibold">
-                  Contact Us
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/login'} className="nav-link active fw-semibold">
-                  Login
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/booknow'} className="btn btn-primary px-3 fw-semibold">
-                  Book Now
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-      <div className="container d-flex justify-content-center align-items-center vh-100">
-        <div className="card shadow p-4" style={{ width: '400px' }}>
-          <h4 className="text-center mb-3 text-primary">Login</h4>
+                {/* Form Section */}
+                <Col lg={7}>
+                  <div className="login-form-container">
+                    <div className="login-form-header">
+                      <h3 className="login-form-title">Sign In</h3>
+                      <p className="login-form-subtitle">
+                        Enter your credentials to access your account
+                      </p>
+                    </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label>Email</label>
-              <input
-                type="email"
-                name='email'
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+                    {/* Success Message */}
+                    {loginSuccess && (
+                      <Alert className="glass-alert-success d-flex align-items-center mb-4">
+                        <FaCheckCircle className="me-2" />
+                        Login successful! Redirecting to dashboard...
+                      </Alert>
+                    )}
+
+                    {/* Error Message */}
+                    {loginError && (
+                      <Alert className="glass-alert-error d-flex align-items-center mb-4">
+                        <FaExclamationCircle className="me-2" />
+                        {loginError}
+                      </Alert>
+                    )}
+
+                    <Form onSubmit={handleSubmit}>
+                      {/* Email Field */}
+                      <Form.Group className="mb-4">
+                        <Form.Label className="login-form-label">
+                          <FaEnvelope className="label-icon" />
+                          Email Address
+                        </Form.Label>
+                        <Form.Control
+                          type="email"
+                          name="email"
+                          placeholder="Enter your email"
+                          className={`glass-form-control ${errors.email ? 'is-invalid' : ''}`}
+                          value={formData.email}
+                          onChange={handleChange}
+                          disabled={isLoading}
+                        />
+                        {errors.email && (
+                          <div className="login-error">{errors.email}</div>
+                        )}
+                      </Form.Group>
+
+                      {/* Password Field */}
+                      <Form.Group className="mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <Form.Label className="login-form-label mb-0">
+                            <FaLock className="label-icon" />
+                            Password
+                          </Form.Label>
+                          <Link to="/forgot-password" className="login-forgot-link">
+                            Forgot Password?
+                          </Link>
+                        </div>
+                        <div className="password-input-wrapper">
+                          <Form.Control
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            placeholder="Enter your password"
+                            className={`glass-form-control ${errors.password ? 'is-invalid' : ''}`}
+                            value={formData.password}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={isLoading}
+                          >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+                        {errors.password && (
+                          <div className="login-error">{errors.password}</div>
+                        )}
+                      </Form.Group>
+
+                      {/* Remember Me */}
+                      <Form.Group className="mb-4">
+                        <Form.Check
+                          type="checkbox"
+                          id="rememberMe"
+                          name="rememberMe"
+                          checked={formData.rememberMe}
+                          onChange={handleChange}
+                          className="login-checkbox"
+                          label="Remember me for 30 days"
+                          disabled={isLoading}
+                        />
+                      </Form.Group>
+
+                      {/* Submit Button */}
+                      <Button 
+                        type="submit"
+                        className="btn-glow w-100 login-submit-btn"
+                        size="lg"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="login-loading">
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Signing in...
+                          </span>
+                        ) : (
+                          <>
+                            <FaSignInAlt className="me-2" />
+                            Sign In
+                          </>
+                        )}
+                      </Button>
+                      {/* Register Link */}
+                      <div className="login-register-link">
+                        <p className="text-secondary-custom mb-0">
+                          Don't have an account?{' '}
+                          <Link to="/register" className="login-link">
+                            Create an account
+                          </Link>
+                        </p>
+                      </div>
+                    </Form>
+                  </div>
+                </Col>
+              </Row>
             </div>
-
-            <div className="mb-3">
-              <label>Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary w-100"
-              disabled={loading}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
-          </form>
-
-          {/* Register Link */}
-          <p className="text-center mt-3">
-            Don't have an account?{" "}
-            <a href="/register" className="text-primary fw-semibold">
-              Register
-            </a>
-          </p>
-        </div>
-      </div>
-
-      {/* Inline theme color */}
-      <style>{`
-      .text-primary {
-        color: #1099a8ff !important;
-      }
-
-      .text-primary:hover{
-          color: #0d7480ff !important;
-        }
-
-      .btn-primary{
-          color: #ffffffff !important;
-          background-color: #1099a8ff !important;
-          border-color: #1099a8ff !important;
-        }
-
-      .btn-primary:hover{
-        background-color: #0d7480ff !important;
-      }
-      
-      .bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        
-        background-color: #e6eef7;
-        opacity: 0.1;
-        background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #e6eef7 40px ), repeating-linear-gradient( #45aaf755, #45aaf7 );
-      }
-    `}</style>
+          </Col>
+        </Row>
+      </Container>
     </div>
-
   );
 };
 

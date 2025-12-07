@@ -63,6 +63,16 @@ const DashboardLayout = () => {
         <Container fluid className="p-4 flex-grow-1">
           <Outlet />
         </Container>
+        {/* FOOTER */}
+        <footer className="footer mt-5 mb-3 text-dark">
+          <div className="container-fluid">
+            <div className="row">
+              <div className="col-12 text-center">
+                {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* Inline CSS */}

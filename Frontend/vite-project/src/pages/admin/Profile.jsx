@@ -128,10 +128,10 @@ export default function Profile() {
                                         <div className="row">
                                             <div className="col-sm-6 d-flex gap-3 align-items-center">
                                                 <div className="info">
-                                                    <h4 className="mt-1 fs-17 ellipsis">
+                                                    <h4 className="mt-1 fs-17 ellipsis text-dark">
                                                         {user?.firstName} {user?.lastName}
                                                     </h4>
-                                                    <p>
+                                                    <p className="text-dark">
                                                         {user?.role?.charAt(0).toUpperCase() +
                                                             user?.role?.slice(1)}
                                                     </p>
@@ -260,22 +260,8 @@ export default function Profile() {
                                     </div>
                                 </div>
                             </div>
-
                         </div>
-
                     </div>
-
-                    {/* FOOTER */}
-                    <footer className="footer mt-5">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-center">
-                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
-                                </div>
-                            </div>
-                        </div>
-                    </footer>
-
                 </div>
             </div>
 

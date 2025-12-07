@@ -214,16 +214,6 @@ const AdminDashboard = () => {
                     </Card>
                 </Col>
             </Row>
-            {/* FOOTER */}
-                    <footer className="footer mt-5 pt-5">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-center">
-                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
-                                </div>
-                            </div>
-                        </div>
-                    </footer>
             {/* Inline styles */}
             <style>{`
         .stat-card {

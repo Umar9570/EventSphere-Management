@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "aos": "^2.3.4",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
@@ -24,6 +25,7 @@
     "recharts": "^3.4.1",
     "simplebar-react": "^3.3.2",
     "socket.io-client": "^4.8.1",
+    "three": "^0.181.2",
     "tinycolor2": "^1.6.0"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Auth/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
 import DashboardLayout from "../components/Layouts/DashboardLayout";
-import Index from "../pages/ClientSide/Index";
+import WebLayout from "../components/Layouts/WebLayout";
 import Register from "../pages/Auth/Register";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import ManageAttendees from "../pages/admin/ManageAttendees";
@@ -21,21 +21,24 @@ import OrganizerChat from "../pages/admin/OrganizerChat";
 import Profile from "../pages/admin/Profile";
 import About from "../pages/ClientSide/About";
 import Contact from "../pages/ClientSide/Contact";
-import Booknow from "../pages/ClientSide/BookNow";
-import Rooms from "../pages/ClientSide/Rooms";
+import Home from "../pages/ClientSide/Home";
+import Events from "../pages/ClientSide/Events";
+import ForgotPassword from "../pages/ClientSide/ForgotPassword";
 
 
 const AppRoutes = () => (
   <Routes>
     {/* ---------------- Public Routes ---------------- */}
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/" element={<Index />} />
-    <Route path="/home" element={<Index />} />
-    <Route path="/about" element={<About />} />
-    <Route path="/contact" element={<Contact />} />
-    <Route path="/booknow" element={<Booknow />} />
-    <Route path="/rooms" element={<Rooms />} />
+    <Route element={<WebLayout />}>
+      <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/events" element={<Events />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+    </Route>
 
 
     {/* ---------------- Protected Dashboard Routes ---------------- */}

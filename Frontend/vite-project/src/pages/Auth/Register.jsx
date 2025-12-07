@@ -1,35 +1,127 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Container, Row, Col, Form, Button, ProgressBar } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
-import "bootstrap/dist/css/bootstrap.min.css";
+import { 
+  FaUser, 
+  FaEnvelope, 
+  FaLock, 
+  FaBuilding,
+  FaUsers,
+  FaCheck,
+  FaEye,
+  FaEyeSlash,
+  FaGoogle,
+  FaLinkedin,
+  FaCalendarAlt,
+  FaPhone,
+  FaArrowLeft
+} from 'react-icons/fa';
 
 const Register = () => {
-  const [form, setForm] = useState({
+  const navigate = useNavigate();
+
+  const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    role: '',
     firstName: '',
     lastName: '',
     email: '',
-    password: '',
     phone: '',
-    role: 'attendee' // default role
+    password: '',
+    confirmPassword: ''
   });
+  const [errors, setErrors] = useState({});
 
-  const navigate = useNavigate();
+  const roles = [
+    {
+      id: 'attendee',
+      icon: <FaUsers />,
+      title: 'Attendee',
+      description: 'Browse events, connect with exhibitors, and manage your schedule'
+    },
+    {
+      id: 'exhibitor',
+      icon: <FaBuilding />,
+      title: 'Exhibitor',
+      description: 'Showcase your products, manage booth, and connect with attendees'
+    }
+  ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const handleRoleSelect = (roleId) => {
+    setFormData({ ...formData, role: roleId });
+    setStep(2);
+  };
+
+  const validateStep2 = () => {
+    const newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number is invalid';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (step === 2 && validateStep2()) {
+      setStep(3);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setIsLoading(true);
+
     try {
       // Dynamic API endpoint based on role
       let endpoint = '/auth/register/attendee';
-      if (form.role === 'exhibitor') endpoint = '/auth/register/exhibitor';
+      if (formData.role === 'exhibitor') endpoint = '/auth/register/exhibitor';
 
-      const { data } = await api.post(endpoint, form);
+      // Prepare the data to send (excluding confirmPassword)
+      const submitData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: formData.role
+      };
+
+      const { data } = await api.post(endpoint, submitData);
+      
       if (data.status) {
         toast.success('Registration successful! You can now log in.');
         navigate('/login');
@@ -38,171 +130,374 @@ const Register = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Server error. Please try again later.');
+      toast.error(err.response?.data?.message || 'Server error. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const getPasswordStrength = () => {
+    const password = formData.password;
+    if (!password) return 0;
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+    if (/\d/.test(password)) strength += 25;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 25;
+    return strength;
+  };
+
+  const getPasswordStrengthColor = () => {
+    const strength = getPasswordStrength();
+    if (strength <= 25) return 'danger';
+    if (strength <= 50) return 'warning';
+    if (strength <= 75) return 'info';
+    return 'success';
+  };
+
+  const getPasswordStrengthText = () => {
+    const strength = getPasswordStrength();
+    if (strength <= 25) return 'Weak';
+    if (strength <= 50) return 'Fair';
+    if (strength <= 75) return 'Good';
+    return 'Strong';
+  };
+
   return (
-    <div className='register-page'>
-      <div className="bg fixed"></div>
-      {/* ================= NAVBAR ================= */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
-        <div className="container">
-          <a className="navbar-brand fw-bold text-primary fs-4" href="#">
-            <i className="bi bi-building me-2"></i>EventSphere
-          </a>
-
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#clientNavbar"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
-
-          <div className="collapse navbar-collapse" id="clientNavbar">
-            <ul className="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-4">
-              <li className="nav-item">
-                <Link to={'/'} className="nav-link fw-semibold">Home</Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/room-categories'} className="nav-link fw-semibold">Rooms</Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/about'} className="nav-link fw-semibold">About</Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/contact'} className="nav-link fw-semibold">Contact Us</Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/login'} className="nav-link active fw-semibold">Login</Link>
-              </li>
-              <li className="nav-item">
-                <Link to={'/booknow'} className="btn btn-primary px-3 fw-semibold">Book Now</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container d-flex justify-content-center align-items-center vh-100">
-        <div className="row justify-content-center">
-          <div className="col-md-12">
-            <div className="card shadow p-4">
-              <h4 className="text-center mb-3">Guest Registration</h4>
-
-              <form onSubmit={handleSubmit}>
-                {/* Role Selection */}
-                <div className="mb-3">
-                  <label>Register as</label>
-                  <select
-                    name="role"
-                    className="form-select"
-                    value={form.role}
-                    onChange={handleChange}
-                  >
-                    <option value="attendee">Attendee (Visit the Exhibition)</option>
-                    <option value="exhibitor">Exhibitor</option>
-                  </select>
-                </div>
-
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label>First Name</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      className="form-control"
-                      value={form.firstName}
-                      onChange={handleChange}
-                      required
-                    />
+    <div className="register-page">
+      <Container>
+        <Row className="justify-content-center">
+          <Col lg={10} xl={10}>
+            <div className="register-card glass-card-strong">
+              <Row className="g-0">
+                {/* Sidebar */}
+                <Col lg={5} className="register-sidebar">
+                  <div className="register-sidebar-content">
+                    <div className="d-flex align-items-center mb-4">
+                      <h4 className="mb-0 ms-0 fw-bold text-white">EventSphere</h4>
+                    </div>
+                    <h2 className="register-sidebar-title mb-3">Join Our Community</h2>
+                    <p className="register-sidebar-text mb-5">
+                      Create an account to access all features of our event management platform.
+                    </p>
+                    
+                    {/* Progress Steps */}
+                    <div className="register-steps">
+                      <div className={`register-step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+                        <div className="register-step-number">
+                          {step > 1 ? <FaCheck /> : '1'}
+                        </div>
+                        <div className="register-step-content">
+                          <div className="register-step-title">Select Role</div>
+                          <div className="register-step-subtitle">Choose your account type</div>
+                        </div>
+                      </div>
+                      <div className={`register-step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
+                        <div className="register-step-number">
+                          {step > 2 ? <FaCheck /> : '2'}
+                        </div>
+                        <div className="register-step-content">
+                          <div className="register-step-title">Account Details</div>
+                          <div className="register-step-subtitle">Enter your information</div>
+                        </div>
+                      </div>
+                      <div className={`register-step ${step >= 3 ? 'active' : ''}`}>
+                        <div className="register-step-number">
+                          {step > 3 ? <FaCheck /> : '3'}
+                        </div>
+                        <div className="register-step-content">
+                          <div className="register-step-title">Complete</div>
+                          <div className="register-step-subtitle">Review and confirm</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label>Last Name</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      className="form-control"
-                      value={form.lastName}
-                      onChange={handleChange}
-                    />
+                </Col>
+
+                {/* Form Section */}
+                <Col lg={7}>
+                  <div className="register-form-container">
+                    {/* Step 1: Role Selection */}
+                    {step === 1 && (
+                      <div className="register-step-content-area">
+                        <h3 className="register-form-title">Create Your Account</h3>
+                        <p className="register-form-subtitle">Select how you'll be using EventSphere</p>
+                        
+                        <div className="role-options">
+                          {roles.map((role) => (
+                            <div 
+                              key={role.id}
+                              className={`role-option-card glass-card ${formData.role === role.id ? 'active' : ''}`}
+                              onClick={() => handleRoleSelect(role.id)}
+                            >
+                              <div className="role-option-icon">
+                                {role.icon}
+                              </div>
+                              <div className="role-option-content">
+                                <h5 className="role-option-title">{role.title}</h5>
+                                <p className="role-option-description">{role.description}</p>
+                              </div>
+                              <div className="role-option-check">
+                                <FaCheck />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="register-login-link">
+                          <p className="text-secondary-custom">
+                            Already have an account?{' '}
+                            <Link to="/login" className="register-link">Log in</Link>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2: Account Details */}
+                    {step === 2 && (
+                      <div className="register-step-content-area">
+                        <div className="register-step-header">
+                          <button 
+                            className="register-back-btn"
+                            onClick={() => setStep(1)}
+                            type="button"
+                          >
+                            <FaArrowLeft />
+                          </button>
+                          <div>
+                            <h3 className="register-form-title mb-1">Account Details</h3>
+                            <p className="register-form-subtitle mb-0">
+                              Registering as <span className="register-role-badge">{roles.find(r => r.id === formData.role)?.title}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <Form>
+                          <Row className="g-3">
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaUser className="label-icon" />
+                                  First Name *
+                                </Form.Label>
+                                <Form.Control
+                                  type="text"
+                                  name="firstName"
+                                  placeholder="John"
+                                  className={`glass-form-control ${errors.firstName ? 'is-invalid' : ''}`}
+                                  value={formData.firstName}
+                                  onChange={handleChange}
+                                />
+                                {errors.firstName && (
+                                  <div className="register-error">{errors.firstName}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaUser className="label-icon" />
+                                  Last Name *
+                                </Form.Label>
+                                <Form.Control
+                                  type="text"
+                                  name="lastName"
+                                  placeholder="Doe"
+                                  className={`glass-form-control ${errors.lastName ? 'is-invalid' : ''}`}
+                                  value={formData.lastName}
+                                  onChange={handleChange}
+                                />
+                                {errors.lastName && (
+                                  <div className="register-error">{errors.lastName}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaEnvelope className="label-icon" />
+                                  Email Address *
+                                </Form.Label>
+                                <Form.Control
+                                  type="email"
+                                  name="email"
+                                  placeholder="john@example.com"
+                                  className={`glass-form-control ${errors.email ? 'is-invalid' : ''}`}
+                                  value={formData.email}
+                                  onChange={handleChange}
+                                />
+                                {errors.email && (
+                                  <div className="register-error">{errors.email}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaPhone className="label-icon" />
+                                  Phone Number *
+                                </Form.Label>
+                                <Form.Control
+                                  type="tel"
+                                  name="phone"
+                                  placeholder="+1 (555) 123-4567"
+                                  className={`glass-form-control ${errors.phone ? 'is-invalid' : ''}`}
+                                  value={formData.phone}
+                                  onChange={handleChange}
+                                />
+                                {errors.phone && (
+                                  <div className="register-error">{errors.phone}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaLock className="label-icon" />
+                                  Password *
+                                </Form.Label>
+                                <div className="password-input-wrapper">
+                                  <Form.Control
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    placeholder="Create a strong password"
+                                    className={`glass-form-control ${errors.password ? 'is-invalid' : ''}`}
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                  >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                  </button>
+                                </div>
+                                {formData.password && (
+                                  <div className="password-strength">
+                                    <ProgressBar 
+                                      now={getPasswordStrength()} 
+                                      variant={getPasswordStrengthColor()}
+                                      className="password-strength-bar"
+                                    />
+                                    <span className={`password-strength-text text-${getPasswordStrengthColor()}`}>
+                                      {getPasswordStrengthText()}
+                                    </span>
+                                  </div>
+                                )}
+                                {errors.password && (
+                                  <div className="register-error">{errors.password}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group>
+                                <Form.Label className="register-form-label">
+                                  <FaLock className="label-icon" />
+                                  Confirm Password *
+                                </Form.Label>
+                                <div className="password-input-wrapper">
+                                  <Form.Control
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    name="confirmPassword"
+                                    placeholder="Confirm your password"
+                                    className={`glass-form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                  >
+                                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                  </button>
+                                </div>
+                                {errors.confirmPassword && (
+                                  <div className="register-error">{errors.confirmPassword}</div>
+                                )}
+                              </Form.Group>
+                            </Col>
+                          </Row>
+
+                          <Button 
+                            className="btn-glow w-100 mt-4"
+                            size="lg"
+                            onClick={handleNextStep}
+                            type="button"
+                          >
+                            Continue
+                          </Button>
+                        </Form>
+                      </div>
+                    )}
+
+                    {/* Step 3: Confirmation */}
+                    {step === 3 && (
+                      <div className="register-step-content-area">
+                        <div className="register-step-header">
+                          <button 
+                            className="register-back-btn"
+                            onClick={() => setStep(2)}
+                            type="button"
+                            disabled={isLoading}
+                          >
+                            <FaArrowLeft />
+                          </button>
+                          <div>
+                            <h3 className="register-form-title mb-1">Almost Done!</h3>
+                            <p className="register-form-subtitle mb-0">Review and complete your registration</p>
+                          </div>
+                        </div>
+
+                        <div className="register-summary glass-card">
+                          <h6 className="register-summary-title">Account Summary</h6>
+                          <div className="register-summary-grid">
+                            <div className="register-summary-item">
+                              <span className="register-summary-label">Role</span>
+                              <span className="register-summary-value">{roles.find(r => r.id === formData.role)?.title}</span>
+                            </div>
+                            <div className="register-summary-item">
+                              <span className="register-summary-label">Name</span>
+                              <span className="register-summary-value">{formData.firstName} {formData.lastName}</span>
+                            </div>
+                            <div className="register-summary-item">
+                              <span className="register-summary-label">Email</span>
+                              <span className="register-summary-value">{formData.email}</span>
+                            </div>
+                            <div className="register-summary-item">
+                              <span className="register-summary-label">Phone</span>
+                              <span className="register-summary-value">{formData.phone}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Form onSubmit={handleSubmit}>
+                          <Button 
+                            type="submit"
+                            className="btn-glow w-100"
+                            size="lg"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Creating Account...
+                              </>
+                            ) : (
+                              'Create Account'
+                            )}
+                          </Button>
+                        </Form>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div className="mb-3">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label>Phone</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    className="form-control"
-                    value={form.phone}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <label>Password</label>
-                  <input
-                    type="password"
-                    name="password"
-                    className="form-control"
-                    value={form.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <button type="submit" className="btn btn-primary w-100">
-                  Register
-                </button>
-              </form>
-
-              <p className="text-center mt-3">
-                Already have an account?{" "}
-                <a href="/login" className="text-primary fw-semibold">Login</a>
-              </p>
+                </Col>
+              </Row>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Inline theme color */}
-      <style>{`
-        .text-primary { color: #1099a8ff !important; }
-        .text-primary:hover { color: #0d7480ff !important; }
-        .btn-primary {
-          color: #ffffffff !important;
-          background-color: #1099a8ff !important;
-          border-color: #1099a8ff !important;
-        }
-        .btn-primary:hover { background-color: #0d7480ff !important; }
-        .bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        
-        background-color: #e6eef7;
-        opacity: 0.1;
-        background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #e6eef7 40px ), repeating-linear-gradient( #45aaf755, #45aaf7 );
-      }
-      `}</style>
+          </Col>
+        </Row>
+      </Container>
     </div>
   );
 };

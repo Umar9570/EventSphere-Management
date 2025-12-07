@@ -338,16 +338,6 @@ const ManageBooths = () => {
                     </Modal.Footer>
                 </Modal>
             </div>
-            {/* FOOTER */}
-                    <footer className="footer mt-5 pt-5">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-center">
-                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
-                                </div>
-                            </div>
-                        </div>
-                    </footer>
 
             <style>{`
                 .booth-card {
