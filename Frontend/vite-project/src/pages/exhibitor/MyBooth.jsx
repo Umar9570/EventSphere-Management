@@ -10,6 +10,16 @@ const MyBooth = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Format time for display (e.g., "09:00" -> "9:00 AM")
+    const formatTime = (time) => {
+        if (!time) return "";
+        const [hours, minutes] = time.split(":");
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const formattedHour = hour % 12 || 12;
+        return `${formattedHour}:${minutes} ${ampm}`;
+    };
+
     const fetchBooth = async () => {
         if (!user) return;
 
@@ -65,7 +75,7 @@ const MyBooth = () => {
 
     return (
         <div className="my-booth-page">
-            <div className ="grid-wrapper">
+            <div className="grid-wrapper">
                 <div className="grid-background"></div>
             </div>
             <div className="col-sm-12 mb-5" style={{ position: "relative", zIndex: 10 }}>
@@ -113,10 +123,21 @@ const MyBooth = () => {
                             <p>{booth.expo?.location || "-"}</p>
                         </Col>
                         <Col md={6}>
-                            <strong>Expo Dates:</strong>
+                            <strong>Expo Date:</strong>
                             <p>
-                                {booth.expo
-                                    ? `${new Date(booth.expo.startDate).toLocaleDateString()} - ${new Date(booth.expo.endDate).toLocaleDateString()}`
+                                {booth.expo?.date
+                                    ? new Date(booth.expo.date).toLocaleDateString()
+                                    : "-"}
+                            </p>
+                        </Col>
+                    </Row>
+
+                    <Row className="mb-2">
+                        <Col md={6}>
+                            <strong>Expo Time:</strong>
+                            <p>
+                                {booth.expo?.startTime && booth.expo?.endTime
+                                    ? `${formatTime(booth.expo.startTime)} - ${formatTime(booth.expo.endTime)}`
                                     : "-"}
                             </p>
                         </Col>
@@ -124,15 +145,15 @@ const MyBooth = () => {
                 </Card.Body>
             </Card>
             {/* FOOTER */}
-                    <footer className="footer mt-5 pt-5">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-center">
-                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
-                                </div>
-                            </div>
+            <footer className="footer mt-5 pt-5">
+                <div className="container-fluid">
+                    <div className="row">
+                        <div className="col-12 text-center">
+                            {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
                         </div>
-                    </footer>
+                    </div>
+                </div>
+            </footer>
 
             <style>{`
                 .my-booth-page h4 { color: #0f172a; }

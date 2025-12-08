@@ -6,8 +6,9 @@ const expoSchema = new Schema(
     description: { type: String },
     location: { type: String, required: true },
 
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    date: { type: Date, required: true },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
 
     organizer: {
       type: mongoose.Schema.Types.ObjectId,

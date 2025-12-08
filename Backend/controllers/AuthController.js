@@ -217,7 +217,17 @@ const AuthController = {
         } catch (err) {
             res.json({ message: err.message, status: false });
         }
+    },
+
+    getUsersCount: async (req, res) => {
+    try {
+        const count = await UserModel.countDocuments();
+        res.json({ status: true, count });
+    } catch (err) {
+        console.error("Get users count error:", err);
+        res.status(500).json({ status: false, message: "Server error" });
     }
+}
 };
 
 module.exports = AuthController;

@@ -21,6 +21,16 @@ const AllExpos = () => {
 
     const [userApplications, setUserApplications] = useState([]); // <-- stores user's applied expos
 
+    // Format time for display (e.g., "09:00" -> "9:00 AM")
+    const formatTime = (time) => {
+        if (!time) return "";
+        const [hours, minutes] = time.split(":");
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const formattedHour = hour % 12 || 12;
+        return `${formattedHour}:${minutes} ${ampm}`;
+    };
+
     // Fetch expos
     const fetchExpos = async () => {
         try {
@@ -28,7 +38,7 @@ const AllExpos = () => {
             const { data } = await api.get("/expos");
             if (data.status) {
                 const sorted = data.expos.sort(
-                    (a, b) => new Date(a.startDate) - new Date(b.startDate)
+                    (a, b) => new Date(a.date) - new Date(b.date)
                 );
                 setExpos(sorted);
             }
@@ -124,7 +134,7 @@ const AllExpos = () => {
 
     return (
         <div className="all-expos-page">
-            <div className ="grid-wrapper">
+            <div className="grid-wrapper">
                 <div className="grid-background"></div>
             </div>
             <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
@@ -186,8 +196,12 @@ const AllExpos = () => {
 
                                         <p className="text-muted small mb-1">
                                             <i className="bi bi-calendar-event me-2"></i>
-                                            {new Date(expo.startDate).toLocaleDateString()} →{" "}
-                                            {new Date(expo.endDate).toLocaleDateString()}
+                                            {new Date(expo.date).toLocaleDateString()}
+                                        </p>
+
+                                        <p className="text-muted small mb-1">
+                                            <i className="bi bi-clock me-2"></i>
+                                            {formatTime(expo.startTime)} - {formatTime(expo.endTime)}
                                         </p>
 
                                         <div className="mt-auto d-flex justify-content-end">
@@ -207,15 +221,15 @@ const AllExpos = () => {
                     })}
                 </div>
                 {/* FOOTER */}
-                    <footer className="footer mt-5 pt-5">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-center">
-                                    {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
-                                </div>
+                <footer className="footer mt-5 pt-5">
+                    <div className="container-fluid">
+                        <div className="row">
+                            <div className="col-12 text-center">
+                                {new Date().getFullYear()} © EventSphere - Made by <b>Umar</b>
                             </div>
                         </div>
-                    </footer>
+                    </div>
+                </footer>
 
                 {/* Apply Modal */}
                 <Modal show={showApplyModal} onHide={() => setShowApplyModal(false)} centered>

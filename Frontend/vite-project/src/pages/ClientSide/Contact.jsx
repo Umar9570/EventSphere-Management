@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Form, Button, Alert, Accordion } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Alert, Accordion, Spinner } from 'react-bootstrap';
 import { 
   FaMapMarkerAlt, 
   FaPhone, 
@@ -7,8 +7,11 @@ import {
   FaClock,
   FaPaperPlane,
   FaCheckCircle,
-  FaQuestionCircle
+  FaQuestionCircle,
+  FaExclamationCircle
 } from 'react-icons/fa';
+import api from '../../api/axios';
+import { toast } from 'react-toastify';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -19,19 +22,54 @@ const Contact = () => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user types
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
+    
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const { data } = await api.post('/contact', formData);
+
+      if (data.status) {
+        setSubmitted(true);
+        toast.success('Message sent successfully!');
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          userType: '',
+          message: ''
+        });
+
+        // Hide success message after 5 seconds
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        setError(data.message || 'Failed to send message');
+        toast.error(data.message || 'Failed to send message');
+      }
+    } catch (err) {
+      console.error('Contact form error:', err);
+      const errorMsg = err.response?.data?.message || 'Failed to send message. Please try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -108,6 +146,13 @@ const Contact = () => {
                   </Alert>
                 )}
 
+                {error && (
+                  <Alert className="glass-alert-error d-flex align-items-center mb-4" data-aos="fade-up">
+                    <FaExclamationCircle className="me-2" />
+                    {error}
+                  </Alert>
+                )}
+
                 <Form onSubmit={handleSubmit} className='contact-form'>
                   <Row className="g-3">
                     <Col md={6} data-aos="fade-up">
@@ -120,6 +165,7 @@ const Contact = () => {
                           className="glass-form-control"
                           value={formData.name}
                           onChange={handleChange}
+                          disabled={submitting}
                           required
                         />
                       </Form.Group>
@@ -134,6 +180,7 @@ const Contact = () => {
                           className="glass-form-control"
                           value={formData.email}
                           onChange={handleChange}
+                          disabled={submitting}
                           required
                         />
                       </Form.Group>
@@ -148,6 +195,7 @@ const Contact = () => {
                           className="glass-form-control"
                           value={formData.subject}
                           onChange={handleChange}
+                          disabled={submitting}
                           required
                         />
                       </Form.Group>
@@ -160,13 +208,12 @@ const Contact = () => {
                           className="glass-form-control glass-form-select"
                           value={formData.userType}
                           onChange={handleChange}
+                          disabled={submitting}
                           required
                         >
                           <option value="">Select user type</option>
                           <option value="attendee">Attendee</option>
                           <option value="exhibitor">Exhibitor</option>
-                          <option value="organizer">Organizer</option>
-                          <option value="other">Other</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
@@ -181,14 +228,24 @@ const Contact = () => {
                           className="glass-form-control"
                           value={formData.message}
                           onChange={handleChange}
+                          disabled={submitting}
                           required
                         />
                       </Form.Group>
                     </Col>
                     <Col xs={12} data-aos="fade-up" data-aos-delay="500">
-                      <Button type="submit" className="btn-glow" size="lg">
-                        <FaPaperPlane className="me-2" />
-                        Send Message
+                      <Button type="submit" className="btn-glow" size="lg" disabled={submitting}>
+                        {submitting ? (
+                          <>
+                            <Spinner animation="border" size="sm" className="me-2" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <FaPaperPlane className="me-2" />
+                            Send Message
+                          </>
+                        )}
                       </Button>
                     </Col>
                   </Row>

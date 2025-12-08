@@ -26,6 +26,9 @@ app.use("/api/exhibitors", require("./routes/ExhibitorRoutes"));
 app.use("/api/attendees", require("./routes/AttendeeRoutes"));
 app.use("/api/schedule", require("./routes/ScheduleRoutes"));
 app.use("/api/messages", require("./routes/MessageRoutes"));
+app.use("/api/contact", require("./routes/ContactRoutes"));
+app.use("/api/password-reset", require('./routes/PasswordResetRoutes'));
+app.use("/api/event-registration", require('./routes/EventRegistrationRoutes'));
 
 // --------- Socket.io Setup ---------
 const Message = require("./models/MessageSchema");

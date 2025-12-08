@@ -21,8 +21,9 @@ const ManageExpos = () => {
         name: "",
         description: "",
         location: "",
-        startDate: "",
-        endDate: "",
+        date: "",
+        startTime: "",
+        endTime: "",
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,7 +71,7 @@ const ManageExpos = () => {
 
             if (data.status) {
                 setShowAddModal(false);
-                setFormData({ name: "", description: "", location: "", startDate: "", endDate: "" });
+                setFormData({ name: "", description: "", location: "", date: "", startTime: "", endTime: "" });
                 fetchExpos();
             }
         } catch (err) {
@@ -88,8 +89,9 @@ const ManageExpos = () => {
             name: expo.name,
             description: expo.description,
             location: expo.location,
-            startDate: expo.startDate?.slice(0, 10),
-            endDate: expo.endDate?.slice(0, 10),
+            date: expo.date?.slice(0, 10),
+            startTime: expo.startTime,
+            endTime: expo.endTime,
         });
         setShowEditModal(true);
     };
@@ -135,86 +137,100 @@ const ManageExpos = () => {
         }
     };
 
+    // Format time for display (e.g., "09:00" -> "9:00 AM")
+    const formatTime = (time) => {
+        if (!time) return "";
+        const [hours, minutes] = time.split(":");
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const formattedHour = hour % 12 || 12;
+        return `${formattedHour}:${minutes} ${ampm}`;
+    };
+
     return (
         <div className="manage-expos-page">
-            <div className ="grid-wrapper">
+            <div className="grid-wrapper">
                 <div className="grid-background"></div>
             </div>
-        <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
-            {/* Header */}
-            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <h4 className="fw-semibold text-secondary mb-0">Manage Expos</h4>
-                <Button variant="primary" onClick={() => setShowAddModal(true)}>
-                    <i className="bi bi-plus-circle me-2"></i>Add Expo
-                </Button>
-            </div>
-
-            {/* Error */}
-            {fetchError && <Alert variant="danger" onClose={() => setFetchError("")} dismissible>{fetchError}</Alert>}
-
-            {/* Loading */}
-            {loading && (
-                <div className="text-center py-5">
-                    <Spinner animation="border" />
-                    <p className="text-muted mt-3">Loading expos...</p>
-                </div>
-            )}
-
-            {/* Empty */}
-            {!loading && expos.length === 0 && <p className="text-center text-muted">No expos found.</p>}
-
-            {/* Expo Cards */}
-            <div className="row g-4">
-                {expos.map((expo) => (
-                    <div key={expo._id} className="col-12 col-md-6 col-lg-4">
-                        <Card className="shadow-sm border-0 expo-card h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="d-flex justify-content-between">
-                                    <h5 className="fw-bold text-dark">{expo.name}</h5>
-                                    <Badge bg="secondary">{expo.location}</Badge>
-                                </div>
-                                <p className="text-muted mt-2 small">{expo.description}</p>
-                                <p className="text-muted small mb-1">
-                                    <i className="bi bi-calendar-event me-2"></i>
-                                    {new Date(expo.startDate).toLocaleDateString()} → {new Date(expo.endDate).toLocaleDateString()}
-                                </p>
-                                <p className="text-muted small">
-                                    <i className="bi bi-people me-2"></i>Exhibitors: {expo.exhibitors?.length || 0}
-                                </p>
-                                <div className="mt-auto d-flex gap-2">
-                                    <Button variant="outline-primary" size="sm" onClick={() => openEditModal(expo)}>
-                                        <i className="bi bi-pencil-square me-1"></i>Edit
-                                    </Button>
-                                    <Button variant="outline-danger" size="sm" disabled={deletingId === expo._id} onClick={() => confirmDeleteExpo(expo)}>
-                                        {deletingId === expo._id ? <Spinner size="sm" animation="border" /> : <i className="bi bi-trash me-1"></i>}
-                                        Delete
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </div>
-                ))}
-            </div>
-
-            {/* Add/Edit Modals */}
-            <ExpoModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={handleAddExpo} saving={saving} formData={formData} handleChange={handleChange} title="Add New Expo" />
-            <ExpoModal show={showEditModal} onHide={() => setShowEditModal(false)} onSubmit={handleUpdateExpo} saving={saving} formData={formData} handleChange={handleChange} title="Edit Expo" />
-
-            {/* Delete Confirmation Modal */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Delete</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete the expo <strong>{expoToDelete?.name}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-                    <Button variant="danger" onClick={handleDeleteExpo} disabled={deletingId === expoToDelete?._id}>
-                        {deletingId === expoToDelete?._id ? <Spinner size="sm" animation="border" /> : "Delete"}
+            <div className="p-4" style={{ position: "relative", zIndex: 10 }}>
+                {/* Header */}
+                <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <h4 className="fw-semibold text-secondary mb-0">Manage Expos</h4>
+                    <Button variant="primary" onClick={() => setShowAddModal(true)}>
+                        <i className="bi bi-plus-circle me-2"></i>Add Expo
                     </Button>
-                </Modal.Footer>
-            </Modal>
+                </div>
+
+                {/* Error */}
+                {fetchError && <Alert variant="danger" onClose={() => setFetchError("")} dismissible>{fetchError}</Alert>}
+
+                {/* Loading */}
+                {loading && (
+                    <div className="text-center py-5">
+                        <Spinner animation="border" />
+                        <p className="text-muted mt-3">Loading expos...</p>
+                    </div>
+                )}
+
+                {/* Empty */}
+                {!loading && expos.length === 0 && <p className="text-center text-muted">No expos found.</p>}
+
+                {/* Expo Cards */}
+                <div className="row g-4">
+                    {expos.map((expo) => (
+                        <div key={expo._id} className="col-12 col-md-6 col-lg-4">
+                            <Card className="shadow-sm border-0 expo-card h-100">
+                                <Card.Body className="d-flex flex-column">
+                                    <div className="d-flex justify-content-between">
+                                        <h5 className="fw-bold text-dark">{expo.name}</h5>
+                                        <Badge bg="secondary">{expo.location}</Badge>
+                                    </div>
+                                    <p className="text-muted mt-2 small">{expo.description}</p>
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-calendar-event me-2"></i>
+                                        {new Date(expo.date).toLocaleDateString()}
+                                    </p>
+                                    <p className="text-muted small mb-1">
+                                        <i className="bi bi-clock me-2"></i>
+                                        {formatTime(expo.startTime)} - {formatTime(expo.endTime)}
+                                    </p>
+                                    <p className="text-muted small">
+                                        <i className="bi bi-people me-2"></i>Exhibitors: {expo.exhibitors?.length || 0}
+                                    </p>
+                                    <div className="mt-auto d-flex gap-2">
+                                        <Button variant="outline-primary" size="sm" onClick={() => openEditModal(expo)}>
+                                            <i className="bi bi-pencil-square me-1"></i>Edit
+                                        </Button>
+                                        <Button variant="outline-danger" size="sm" disabled={deletingId === expo._id} onClick={() => confirmDeleteExpo(expo)}>
+                                            {deletingId === expo._id ? <Spinner size="sm" animation="border" /> : <i className="bi bi-trash me-1"></i>}
+                                            Delete
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Add/Edit Modals */}
+                <ExpoModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={handleAddExpo} saving={saving} formData={formData} handleChange={handleChange} title="Add New Expo" />
+                <ExpoModal show={showEditModal} onHide={() => setShowEditModal(false)} onSubmit={handleUpdateExpo} saving={saving} formData={formData} handleChange={handleChange} title="Edit Expo" />
+
+                {/* Delete Confirmation Modal */}
+                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Delete</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Are you sure you want to delete the expo <strong>{expoToDelete?.name}</strong>?
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDeleteExpo} disabled={deletingId === expoToDelete?._id}>
+                            {deletingId === expoToDelete?._id ? <Spinner size="sm" animation="border" /> : "Delete"}
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
 
             {/* Styles */}
@@ -286,17 +302,21 @@ const ExpoModal = ({ show, onHide, onSubmit, saving, formData, handleChange, tit
                     <Form.Label>Location</Form.Label>
                     <Form.Control name="location" required value={formData.location} onChange={handleChange} />
                 </Form.Group>
+                <Form.Group className="mb-2">
+                    <Form.Label>Date</Form.Label>
+                    <Form.Control type="date" name="date" required value={formData.date} onChange={handleChange} />
+                </Form.Group>
                 <Row>
                     <Col>
                         <Form.Group className="mb-2">
-                            <Form.Label>Start Date</Form.Label>
-                            <Form.Control type="date" name="startDate" required value={formData.startDate} onChange={handleChange} />
+                            <Form.Label>Start Time</Form.Label>
+                            <Form.Control type="time" name="startTime" required value={formData.startTime} onChange={handleChange} />
                         </Form.Group>
                     </Col>
                     <Col>
                         <Form.Group className="mb-2">
-                            <Form.Label>End Date</Form.Label>
-                            <Form.Control type="date" name="endDate" required value={formData.endDate} onChange={handleChange} />
+                            <Form.Label>End Time</Form.Label>
+                            <Form.Control type="time" name="endTime" required value={formData.endTime} onChange={handleChange} />
                         </Form.Group>
                     </Col>
                 </Row>

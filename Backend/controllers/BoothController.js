@@ -41,7 +41,7 @@ const BoothController = {
         try {
             const { exhibitorId } = req.params;
             const booth = await Booth.findOne({ assignedTo: exhibitorId })
-                .populate("expo", "name location startDate endDate");
+                .populate("expo", "name location date startTime endTime");
 
             if (!booth) {
                 return res.json({ status: true, booth: null });

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Container, Row, Col, Button, Card } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from 'react';
+import { Container, Row, Col, Button, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { 
   FaCalendarCheck, 
@@ -15,8 +15,120 @@ import {
 } from 'react-icons/fa';
 import EventCard from '../../components/EventCard';
 import GradientText from '../../components/GradientText/GradientText';
+import api from '../../api/axios';
+import { AuthContext } from '../../context/AuthContext';
 
 const Home = () => {
+  const { user } = useContext(AuthContext);
+  const [expos, setExpos] = useState([]);
+  const [usersCount, setUsersCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalExpos: 0,
+    totalUsers: 0,
+    nearestExpo: null,
+    upcomingExpos: []
+  });
+
+  // Format time for display (e.g., "09:00" -> "9:00 AM")
+  const formatTime = (time) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
+
+  // Check if expo is in the future
+  const isFutureExpo = (expoDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expo = new Date(expoDate);
+    expo.setHours(0, 0, 0, 0);
+    return expo >= today;
+  };
+
+  // Get days until expo
+  const getDaysUntil = (expoDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expo = new Date(expoDate);
+    expo.setHours(0, 0, 0, 0);
+    const diffTime = expo - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Get month abbreviation
+  const getMonthAbbr = (date) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[new Date(date).getMonth()];
+  };
+
+  // Get day
+  const getDay = (date) => {
+    return new Date(date).getDate().toString().padStart(2, '0');
+  };
+
+  // Fetch data
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch expos
+      const { data: exposData } = await api.get('/expos');
+      
+      // Fetch users count
+      const { data: usersData } = await api.get('/auth/users/count');
+
+      if (exposData.status) {
+        const allExpos = exposData.expos;
+        setExpos(allExpos);
+
+        // Filter upcoming expos
+        const upcoming = allExpos.filter(expo => isFutureExpo(expo.date));
+        
+        // Sort upcoming by date (nearest first)
+        upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // Get nearest upcoming expo
+        const nearest = upcoming.length > 0 ? upcoming[0] : null;
+
+        // Get top 3 upcoming expos for cards
+        const upcomingCards = upcoming.slice(0, 3).map(expo => ({
+          _id: expo._id,
+          title: expo.name,
+          date: getDay(expo.date),
+          month: getMonthAbbr(expo.date),
+          location: expo.location,
+          attendees: `${expo.exhibitors?.length || 0}`,
+          time: `${formatTime(expo.startTime)} - ${formatTime(expo.endTime)}`,
+          description: expo.description,
+          startTime: expo.startTime,
+          endTime: expo.endTime
+        }));
+
+        setStats({
+          totalExpos: allExpos.length,
+          totalUsers: usersData.count || 0,
+          nearestExpo: nearest,
+          upcomingExpos: upcomingCards
+        });
+
+        setUsersCount(usersData.count || 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const features = [
     {
       icon: <FaCalendarCheck />,
@@ -50,42 +162,21 @@ const Home = () => {
     }
   ];
 
-  const upcomingEvents = [
-    {
-      title: 'Tech Innovation Expo 2024',
-      category: 'Technology',
-      date: '15',
-      month: 'Mar',
-      location: 'San Francisco, CA',
-      attendees: '5,000+',
-      time: '9:00 AM - 6:00 PM'
-    },
-    {
-      title: 'Global Health Summit',
-      category: 'Healthcare',
-      date: '22',
-      month: 'Mar',
-      location: 'New York, NY',
-      attendees: '3,200+',
-      time: '10:00 AM - 5:00 PM'
-    },
-    {
-      title: 'Sustainable Future Conference',
-      category: 'Environment',
-      date: '05',
-      month: 'Apr',
-      location: 'Seattle, WA',
-      attendees: '2,800+',
-      time: '8:00 AM - 4:00 PM'
-    }
-  ];
-
-  const stats = [
-    { number: '500+', label: 'Events Organized' },
-    { number: '50,000+', label: 'Attendees Connected' },
-    { number: '2,000+', label: 'Exhibitors' },
+  const statsDisplay = [
+    { number: `${stats.totalExpos}+`, label: 'Events Organized' },
+    { number: `${stats.totalUsers.toLocaleString()}+`, label: 'Total Registrations' },
+    { number: `${expos.filter(e => isFutureExpo(e.date)).length}`, label: 'Upcoming Events' },
     { number: '98%', label: 'Satisfaction Rate' }
   ];
+
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" />
+        <p className="text-muted mt-3">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -114,7 +205,15 @@ const Home = () => {
                   Explore Events
                   <FaArrowRight className="ms-2" />
                 </Button>
-                <Button 
+                {user ? (<Button 
+                  as={Link} 
+                  to="/events" 
+                  className="btn-glow"
+                  size="lg"
+                >
+                  Get Started
+                </Button>):(
+                  <Button 
                   as={Link} 
                   to="/register" 
                   className="btn-glow"
@@ -122,34 +221,50 @@ const Home = () => {
                 >
                   Get Started
                 </Button>
+                )
+                }
               </div>
             </Col>
             <Col lg={6} className="hero-image d-none d-lg-block" data-aos="fade-left">
               <div className="floating-card">
                 <Row className="g-3 justify-content-center">
-                  <Col xs={5} className="event-card mx-1" >
+                  <Col xs={5} className="event-card mx-1">
                     <div className="text-center p-3 rounded-3" data-aos="fade-up" data-aos-delay="100">
-                      <h3 className="text-success mb-1">156</h3>
-                      <small className="text-light">Active Events</small>
+                      <h3 className="text-success mb-1">{stats.totalExpos}</h3>
+                      <small className="text-light">Total Events Held</small>
                     </div>
                   </Col>
                   <Col xs={5} className="event-card mx-1">
-                    <div className="text-center p-3 rounded-3"  data-aos="fade-up" data-aos-delay="200">
-                      <h3 className="text-warning mb-1">12.5K</h3>
-                      <small className="text-light">Registrations</small>
+                    <div className="text-center p-3 rounded-3" data-aos="fade-up" data-aos-delay="200">
+                      <h3 className="text-warning mb-1">{stats.totalUsers > 1000 ? `${(stats.totalUsers / 1000).toFixed(1)}K` : stats.totalUsers}</h3>
+                      <small className="text-light">Total Registrations</small>
                     </div>
                   </Col>
                   <Col xs={10} className="event-card">
                     <div className="p-3 rounded-3" data-aos="fade-up" data-aos-delay="300">
-                      <div className="d-flex align-items-center justify-content-between">
-                        <div>
-                          <h6 className="mb-1">Tech Summit 2024</h6>
-                          <small className="text-light">Starting in 2 days</small>
+                      {stats.nearestExpo ? (
+                        <div className="d-flex align-items-center justify-content-between">
+                          <div>
+                            <small className='' style={{color: '#ffffffbd', fontSize: '12px'}}>Upcoming Event</small>
+                            <h6 className="mb-1 mt-2">{stats.nearestExpo.name}</h6>
+                            <small className="text-light">
+                              {getDaysUntil(stats.nearestExpo.date) === 0 
+                                ? 'Today!' 
+                                : getDaysUntil(stats.nearestExpo.date) === 1
+                                ? 'Tomorrow'
+                                : `In ${getDaysUntil(stats.nearestExpo.date)} days`
+                              }
+                            </small>
+                          </div>
+                          <div className="text-info-emphasis">
+                            <FaCalendarCheck size={24} />
+                          </div>
                         </div>
-                        <div className="text-info-emphasis">
-                          <FaCalendarCheck size={24} />
+                      ) : (
+                        <div className="text-center">
+                          <small className="text-light">No upcoming events</small>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </Col>
                 </Row>
@@ -163,7 +278,7 @@ const Home = () => {
       <section className="stats-section" data-aos="fade-up">
         <Container>
           <Row>
-            {stats.map((stat, index) => (
+            {statsDisplay.map((stat, index) => (
               <Col md={3} sm={6} key={index} data-aos="fade-up" data-aos-delay={index * 100}>
                 <div className="stat-item">
                   <div className="stat-number">{stat.number}</div>
@@ -217,13 +332,20 @@ const Home = () => {
               View All Events <FaArrowRight className="ms-2" />
             </Button>
           </div>
-          <Row className="g-4">
-            {upcomingEvents.map((event, index) => (
-              <Col lg={4} md={6} key={index} data-aos="fade-up" data-aos-delay={index * 100}>
-                <EventCard event={event} />
-              </Col>
-            ))}
-          </Row>
+          {stats.upcomingExpos.length > 0 ? (
+            <Row className="g-4">
+              {stats.upcomingExpos.map((event, index) => (
+                <Col lg={4} md={6} key={event._id} data-aos="fade-up" data-aos-delay={index * 100}>
+                  <EventCard event={event} />
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <div className="text-center py-5">
+              <FaCalendarCheck size={48} className="text-muted mb-3" />
+              <p className="text-muted">No upcoming events at the moment</p>
+            </div>
+          )}
           <div className="text-center mt-4 d-md-none" data-aos="fade-up">
             <Button 
               as={Link} 
@@ -257,14 +379,14 @@ const Home = () => {
                 >
                   View Events
                 </Button>
-                <Button 
+                {!user ? (<Button 
                   as={Link} 
                   to="/register" 
                   size="lg"
                   className="btn-glow px-4"
                 >
                   Register
-                </Button>
+                </Button>): ('')}
               </div>
             </Col>
           </Row>

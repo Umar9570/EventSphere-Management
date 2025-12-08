@@ -6,8 +6,8 @@ const ScheduleController = {
   getAllSchedules: async (req, res) => {
     try {
       const schedule = await Schedule.find()
-        .populate("expo", "name")
-        .sort({ date: 1, startTime: 1 });
+        .populate("expo", "name date startTime endTime")
+        .sort({ startTime: 1 });
 
       res.json({ status: true, schedule });
     } catch (err) {
@@ -19,17 +19,24 @@ const ScheduleController = {
   // ---------------- CREATE SESSION ----------------
   createSchedule: async (req, res) => {
     try {
-      const { title, description, expo, date, startTime, endTime } = req.body;
+      const { title, description, expo, startTime, endTime } = req.body;
 
       const expoExists = await Expo.findById(expo);
       if (!expoExists)
         return res.status(404).json({ status: false, message: "Expo not found" });
 
+      // Validate session times are within expo times
+      if (startTime < expoExists.startTime || endTime > expoExists.endTime) {
+        return res.status(400).json({ 
+          status: false, 
+          message: "Session times must be within expo operating hours" 
+        });
+      }
+
       const newSession = await Schedule.create({
         title,
         description,
         expo,
-        date,
         startTime,
         endTime,
       });
@@ -45,7 +52,7 @@ const ScheduleController = {
   updateSchedule: async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, description, expo, date, startTime, endTime } = req.body;
+      const { title, description, expo, startTime, endTime } = req.body;
 
       const session = await Schedule.findById(id);
       if (!session)
@@ -55,12 +62,22 @@ const ScheduleController = {
         const expoExists = await Expo.findById(expo);
         if (!expoExists)
           return res.status(404).json({ status: false, message: "Expo not found" });
+        
+        // Validate session times are within new expo times
+        const sessionStartTime = startTime ?? session.startTime;
+        const sessionEndTime = endTime ?? session.endTime;
+        
+        if (sessionStartTime < expoExists.startTime || sessionEndTime > expoExists.endTime) {
+          return res.status(400).json({ 
+            status: false, 
+            message: "Session times must be within expo operating hours" 
+          });
+        }
       }
 
       session.title = title ?? session.title;
       session.description = description ?? session.description;
       session.expo = expo ?? session.expo;
-      session.date = date ?? session.date;
       session.startTime = startTime ?? session.startTime;
       session.endTime = endTime ?? session.endTime;
 

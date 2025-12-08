@@ -19,4 +19,6 @@ router.delete('/:id', AuthController.deleteUser);
 // ---------------- GET USERS BY ROLE ----------------
 router.get('/role/:role', AuthController.getUsersByRole);
 
+router.get('/users/count', AuthController.getUsersCount);
+
 module.exports = router;

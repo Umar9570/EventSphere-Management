@@ -1,126 +1,159 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Form, InputGroup, Button } from 'react-bootstrap';
-import { FaSearch, FaFilter, FaMapMarkerAlt, FaCalendarAlt, FaTh, FaList, FaUsers, FaClock } from 'react-icons/fa';
+import React, { useState, useEffect, useContext } from 'react';
+import { Container, Row, Col, Form, InputGroup, Button, Spinner, Alert, Modal } from 'react-bootstrap';
+import { FaSearch, FaMapMarkerAlt, FaCalendarAlt, FaUsers, FaClock, FaCheckCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
+import api from '../../api/axios';
+import { toast } from 'react-toastify';
 
 const Events = () => {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [viewMode, setViewMode] = useState('grid');
+  const [expos, setExpos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [registering, setRegistering] = useState(null);
+  const [userRegistrations, setUserRegistrations] = useState([]);
 
-  const categories = [
-    'All', 'Technology', 'Healthcare', 'Finance', 'Education',
-    'Manufacturing', 'Retail', 'Environment', 'Food & Beverage'
-  ];
+  // Modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registrationData, setRegistrationData] = useState(null);
 
-  const events = [
-    {
-      id: 1,
-      title: 'Tech Innovation Expo 2024',
-      category: 'Technology',
-      date: '15',
-      month: 'Mar',
-      location: 'San Francisco, CA',
-      attendees: '5,000+',
-      time: '9:00 AM - 6:00 PM',
-      description: 'Join the largest technology expo featuring AI, IoT, and emerging tech.'
-    },
-    {
-      id: 2,
-      title: 'Global Health Summit',
-      category: 'Healthcare',
-      date: '22',
-      month: 'Mar',
-      location: 'New York, NY',
-      attendees: '3,200+',
-      time: '10:00 AM - 5:00 PM',
-      description: 'Connect with healthcare professionals and discover medical innovations.'
-    },
-    {
-      id: 3,
-      title: 'Sustainable Future Conference',
-      category: 'Environment',
-      date: '05',
-      month: 'Apr',
-      location: 'Seattle, WA',
-      attendees: '2,800+',
-      time: '8:00 AM - 4:00 PM',
-      description: 'Explore sustainable solutions and green technology innovations.'
-    },
-    {
-      id: 4,
-      title: 'FinTech World Expo',
-      category: 'Finance',
-      date: '12',
-      month: 'Apr',
-      location: 'Chicago, IL',
-      attendees: '4,500+',
-      time: '9:00 AM - 5:00 PM',
-      description: 'Discover the latest in financial technology and digital banking.'
-    },
-    {
-      id: 5,
-      title: 'EdTech Innovation Summit',
-      category: 'Education',
-      date: '18',
-      month: 'Apr',
-      location: 'Boston, MA',
-      attendees: '2,100+',
-      time: '10:00 AM - 4:00 PM',
-      description: 'Transform education with cutting-edge learning technologies.'
-    },
-    {
-      id: 6,
-      title: 'Manufacturing 4.0 Expo',
-      category: 'Manufacturing',
-      date: '25',
-      month: 'Apr',
-      location: 'Detroit, MI',
-      attendees: '3,800+',
-      time: '8:00 AM - 5:00 PM',
-      description: 'Explore automation, robotics, and smart manufacturing solutions.'
-    },
-    {
-      id: 7,
-      title: 'Retail Innovation Show',
-      category: 'Retail',
-      date: '02',
-      month: 'May',
-      location: 'Las Vegas, NV',
-      attendees: '6,000+',
-      time: '9:00 AM - 6:00 PM',
-      description: 'The future of retail, e-commerce, and customer experience.'
-    },
-    {
-      id: 8,
-      title: 'Food & Beverage Trade Show',
-      category: 'Food & Beverage',
-      date: '10',
-      month: 'May',
-      location: 'Miami, FL',
-      attendees: '4,200+',
-      time: '10:00 AM - 5:00 PM',
-      description: 'Taste the future of food innovation and beverage trends.'
-    },
-    {
-      id: 9,
-      title: 'AI & Machine Learning Summit',
-      category: 'Technology',
-      date: '18',
-      month: 'May',
-      location: 'Austin, TX',
-      attendees: '3,500+',
-      time: '9:00 AM - 5:00 PM',
-      description: 'Deep dive into artificial intelligence and machine learning.'
+  // Format time for display (e.g., "09:00" -> "9:00 AM")
+  const formatTime = (time) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
+
+  // Check if expo is in the past
+  const isPastExpo = (expoDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expo = new Date(expoDate);
+    expo.setHours(0, 0, 0, 0);
+    return expo < today;
+  };
+
+  // Fetch expos
+  const fetchExpos = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get('/expos');
+      if (data.status) {
+        // Sort by date (newest first)
+        const sorted = data.expos.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setExpos(sorted);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load events');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' ||
-      event.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
+  // Fetch user registrations
+  const fetchUserRegistrations = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data } = await api.get(`/event-registration/user/${user.id}`);
+      if (data.status) {
+        setUserRegistrations(data.registrations);
+      }
+    } catch (err) {
+      console.error('Failed to fetch registrations:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpos();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserRegistrations();
+    }
+  }, [user]);
+
+  // Check if user is registered for an expo
+  const isUserRegistered = (expoId) => {
+    return userRegistrations.some(reg => reg.expo._id === expoId);
+  };
+
+  // Handle registration
+  const handleRegister = async (expoId) => {
+    // Check if user is logged in
+    if (!user) {
+      toast.info('Please login to register for events');
+      navigate('/login');
+      return;
+    }
+
+    // Check if already registered
+    if (isUserRegistered(expoId)) {
+      toast.info('You are already registered for this event');
+      return;
+    }
+
+    try {
+      setRegistering(expoId);
+
+      const { data } = await api.post('/event-registration/register', {
+        userId: user.id,
+        expoId: expoId
+      });
+
+      if (data.status) {
+        toast.success('Registration successful! Check your email for the QR code.');
+        setRegistrationData(data.registration);
+        setShowSuccessModal(true);
+        fetchUserRegistrations(); // Refresh registrations
+      } else {
+        toast.error(data.message || 'Registration failed');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      const errorMsg = err.response?.data?.message || 'Failed to register for event';
+      toast.error(errorMsg);
+    } finally {
+      setRegistering(null);
+    }
+  };
+
+  // Filter expos based on search
+  const filteredExpos = expos.filter(expo => {
+    const matchesSearch = expo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expo.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expo.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
+
+  // Get month abbreviation
+  const getMonthAbbr = (date) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[new Date(date).getMonth()];
+  };
+
+  // Get day
+  const getDay = (date) => {
+    return new Date(date).getDate().toString().padStart(2, '0');
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" />
+        <p className="text-muted mt-3">Loading events...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="events-page">
@@ -174,79 +207,96 @@ const Events = () => {
           <div className="events-filter-bar d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
               <p className="mb-0 text-secondary-custom">
-                Showing <strong className="text-primary-custom">{filteredEvents.length}</strong> events
+                Showing <strong className="text-primary-custom">{filteredExpos.length}</strong> events
               </p>
             </div>
-            <div className="d-flex align-items-center gap-2">
-              <span className="text-muted-custom me-2">View:</span>
-              <button
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <FaTh />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <FaList />
-              </button>
-            </div>
           </div>
 
-          {/* Category Pills */}
-          <div className="category-pills mb-4">
-            {categories.map((cat, index) => (
-              <span
-                key={index}
-                className={`filter-chip ${
-                  selectedCategory === cat.toLowerCase() ||
-                  (cat === 'All' && selectedCategory === 'all')
-                    ? 'active'
-                    : ''
-                }`}
-                onClick={() => setSelectedCategory(cat === 'All' ? 'all' : cat.toLowerCase())}
-              >
-                {cat}
-              </span>
-            ))}
-          </div>
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="danger" onClose={() => setError('')} dismissible>
+              {error}
+            </Alert>
+          )}
 
           {/* Events Grid */}
-          {filteredEvents.length > 0 ? (
+          {filteredExpos.length > 0 ? (
             <Row className="g-4">
-              {filteredEvents.map((event) => (
-                <Col lg={4} md={6} key={event.id}>
-                  <div className="glass-card event-card h-100">
-                    <div className="event-card-image">
-                      <span className="event-card-emoji">🎪</span>
-                      <div className="event-date-badge glass-card-strong">
-                        <div className="event-date-day">{event.date}</div>
-                        <div className="event-date-month">{event.month}</div>
+              {filteredExpos.map((expo) => {
+                const isPast = isPastExpo(expo.date);
+                const isRegistered = isUserRegistered(expo._id);
+                const isRegisteringThis = registering === expo._id;
+
+                return (
+                  <Col lg={4} md={6} key={expo._id}>
+                    <div className="glass-card event-card h-100">
+                      <div className="event-card-image">
+                        <span className="event-card-emoji">🎪</span>
+                        <div className="event-date-badge glass-card-strong">
+                          <div className="event-date-day">{getDay(expo.date)}</div>
+                          <div className="event-date-month">{getMonthAbbr(expo.date)}</div>
+                        </div>
+                      </div>
+                      <div className="event-card-content">
+                        {isPast ? (
+                          <span className="event-category-badge" style={{ backgroundColor: '#6c757d' }}>
+                            Past Event
+                          </span>
+                        ) : isRegistered ? (
+                          <span className="event-category-badge" style={{color: '#00ad26ff', backgroundColor: '#546458a8', borderColor: '#00c40048'}}>
+                            Registered ✓
+                          </span>
+                        ) : (
+                          <span className="event-category-badge">Upcoming</span>
+                        )}
+                        <h5 className="event-card-title">{expo.name}</h5>
+                        <p className="text-light small mb-3" style={{ minHeight: '40px' }}>
+                          {expo.description || 'No description available'}
+                        </p>
+                        <div className="event-card-location">
+                          <FaMapMarkerAlt className="location-icon" />
+                          <span>{expo.location}</span>
+                        </div>
+                        <div className="event-card-meta">
+                          <span className="meta-item">
+                            <FaUsers /> {expo.exhibitors?.length || 0} Exhibitors
+                          </span>
+                          <span className="meta-item">
+                            <FaClock /> {formatTime(expo.startTime)} - {formatTime(expo.endTime)}
+                          </span>
+                        </div>
+                        {!isPast && !isRegistered && (
+                          <Button 
+                            className="btn-glow w-100"
+                            onClick={() => handleRegister(expo._id)}
+                            disabled={isRegisteringThis}
+                          >
+                            {isRegisteringThis ? (
+                              <>
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                Registering...
+                              </>
+                            ) : (
+                              'Register Now'
+                            )}
+                          </Button>
+                        )}
+                        {!isPast && isRegistered && (
+                          <Button className="btn-glass w-100" disabled>
+                            <FaCheckCircle className="me-2" />
+                            Already Registered
+                          </Button>
+                        )}
+                        {isPast && (
+                          <div className="text-center py-2">
+                            <small className="text-muted">This event has ended</small>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="event-card-content">
-                      <span className="event-category-badge">{event.category}</span>
-                      <h5 className="event-card-title">{event.title}</h5>
-                      <div className="event-card-location">
-                        <FaMapMarkerAlt className="location-icon" />
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="event-card-meta">
-                        <span className="meta-item">
-                          <FaUsers /> {event.attendees}
-                        </span>
-                        <span className="meta-item">
-                          <FaClock /> {event.time}
-                        </span>
-                      </div>
-                      <Button className="btn-glow w-100">
-                        Register Now
-                      </Button>
-                    </div>
-                  </div>
-                </Col>
-              ))}
+                  </Col>
+                );
+              })}
             </Row>
           ) : (
             <div className="no-events-container text-center py-5">
@@ -254,29 +304,68 @@ const Events = () => {
                 <FaCalendarAlt size={48} className="text-muted-custom" />
               </div>
               <h4 className="text-primary-custom">No events found</h4>
-              <p className="text-secondary-custom">Try adjusting your search or filter criteria</p>
+              <p className="text-secondary-custom">Try adjusting your search criteria</p>
               <Button
                 className="btn-glass"
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedCategory('all');
-                }}
+                onClick={() => setSearchTerm('')}
               >
-                Clear Filters
+                Clear Search
               </Button>
             </div>
           )}
 
           {/* Load More */}
-          {filteredEvents.length > 0 && (
+          {filteredExpos.length > 0 && filteredExpos.length >= 9 && (
             <div className="text-center mt-5">
-              <Button className="btn-outline-glow">
-                Load More Events
+              <Button className="btn-outline-glow" disabled>
+                All Events Loaded
               </Button>
             </div>
           )}
         </Container>
       </section>
+
+      {/* Success Modal */}
+      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title>Registration Successful!</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center py-4">
+          <div className="mb-3">
+            <div style={{ 
+              width: '80px', 
+              height: '80px', 
+              borderRadius: '50%', 
+              backgroundColor: '#28a745', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto' 
+            }}>
+              <FaCheckCircle size={40} color="white" />
+            </div>
+          </div>
+          <h5 className="mb-3">You're all set!</h5>
+          <p className="text-muted mb-4">
+            We've sent your event QR code to your email. Present it at the event entrance to mark your attendance.
+          </p>
+          {registrationData?.qrCodeImage && (
+            <div className="mb-3">
+              <img 
+                src={registrationData.qrCodeImage} 
+                alt="QR Code" 
+                style={{ maxWidth: '200px', border: '2px solid #1099a8', borderRadius: '10px', padding: '10px' }}
+              />
+              <p className="text-muted small mt-2">Save this QR code or check your email</p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-0 justify-content-center">
+          <Button variant="primary" onClick={() => setShowSuccessModal(false)}>
+            Got it!
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
