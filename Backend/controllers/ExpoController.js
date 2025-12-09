@@ -6,7 +6,7 @@ const ExpoController = {
   // ---------------- CREATE EXPO (Organizer Only) ----------------
   createExpo: async (req, res) => {
     try {
-      const { name, description, location, date, startTime, endTime } = req.body;
+      const { name, description, location, date, startTime, endTime, image } = req.body;
 
       // Ensure required fields
       if (!name || !location || !date || !startTime || !endTime) {
@@ -14,7 +14,6 @@ const ExpoController = {
       }
 
       // Get organizer from request (set via frontend)
-      // Since you said no middleware/tokens, let's accept organizer from the request body
       const organizer = req.body.organizer;
       if (!organizer) {
         return res.json({ message: "Organizer is required", status: false });
@@ -27,6 +26,7 @@ const ExpoController = {
         date,
         startTime,
         endTime,
+        image: image || "",
         organizer,
       });
 
@@ -45,11 +45,11 @@ const ExpoController = {
   updateExpo: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, location, date, startTime, endTime } = req.body;
+      const { name, description, location, date, startTime, endTime, image } = req.body;
 
       const updatedExpo = await ExpoModel.findByIdAndUpdate(
         id,
-        { name, description, location, date, startTime, endTime },
+        { name, description, location, date, startTime, endTime, image },
         { new: true }
       );
 

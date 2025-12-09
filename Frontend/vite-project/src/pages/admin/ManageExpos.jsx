@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Card, Button, Spinner, Modal, Form, Row, Col, Alert, Badge } from "react-bootstrap";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
+import { FaImage, FaCloudUploadAlt } from "react-icons/fa";
 
 const ManageExpos = () => {
     const { user } = useContext(AuthContext);
@@ -16,6 +17,7 @@ const ManageExpos = () => {
 
     const [saving, setSaving] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -24,10 +26,25 @@ const ManageExpos = () => {
         date: "",
         startTime: "",
         endTime: "",
+        image: "",
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [expoToDelete, setExpoToDelete] = useState(null);
+
+    // Cloudinary configuration
+    const CLOUDINARY_UPLOAD_PRESET = "EventManagement"; // Replace with your preset
+    const CLOUDINARY_CLOUD_NAME = "dlsnlocky"; // Replace with your cloud name
+
+    // Format time for display (e.g., "09:00" -> "9:00 AM")
+    const formatTime = (time) => {
+        if (!time) return "";
+        const [hours, minutes] = time.split(":");
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const formattedHour = hour % 12 || 12;
+        return `${formattedHour}:${minutes} ${ampm}`;
+    };
 
     // Fetch expos from backend
     const fetchExpos = async () => {
@@ -50,6 +67,59 @@ const ManageExpos = () => {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    // Upload image to Cloudinary
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            alert("Please select a valid image file (JPEG, PNG, WebP, or GIF)");
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Image size should be less than 5MB");
+            return;
+        }
+
+        setUploading(true);
+
+        try {
+            const formDataCloud = new FormData();
+            formDataCloud.append("file", file);
+            formDataCloud.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+                {
+                    method: "POST",
+                    body: formDataCloud,
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.secure_url) {
+                setFormData({ ...formData, image: data.secure_url });
+            } else {
+                alert("Failed to upload image. Please try again.");
+            }
+        } catch (err) {
+            console.error("Image upload error:", err);
+            alert("Failed to upload image. Please try again.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Remove image
+    const handleRemoveImage = () => {
+        setFormData({ ...formData, image: "" });
+    };
+
     // Add new expo
     const handleAddExpo = async (e) => {
         e.preventDefault();
@@ -71,7 +141,7 @@ const ManageExpos = () => {
 
             if (data.status) {
                 setShowAddModal(false);
-                setFormData({ name: "", description: "", location: "", date: "", startTime: "", endTime: "" });
+                setFormData({ name: "", description: "", location: "", date: "", startTime: "", endTime: "", image: "" });
                 fetchExpos();
             }
         } catch (err) {
@@ -92,6 +162,7 @@ const ManageExpos = () => {
             date: expo.date?.slice(0, 10),
             startTime: expo.startTime,
             endTime: expo.endTime,
+            image: expo.image || "",
         });
         setShowEditModal(true);
     };
@@ -137,15 +208,19 @@ const ManageExpos = () => {
         }
     };
 
-    // Format time for display (e.g., "09:00" -> "9:00 AM")
-    const formatTime = (time) => {
-        if (!time) return "";
-        const [hours, minutes] = time.split(":");
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const formattedHour = hour % 12 || 12;
-        return `${formattedHour}:${minutes} ${ampm}`;
+    // Close modal and reset form
+    const closeAddModal = () => {
+        setShowAddModal(false);
+        setFormData({ name: "", description: "", location: "", date: "", startTime: "", endTime: "", image: "" });
     };
+
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setFormData({ name: "", description: "", location: "", date: "", startTime: "", endTime: "", image: "" });
+    };
+
+    // Default expo image
+    const defaultExpoImage = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop";
 
     return (
         <div className="manage-expos-page">
@@ -180,11 +255,23 @@ const ManageExpos = () => {
                     {expos.map((expo) => (
                         <div key={expo._id} className="col-12 col-md-6 col-lg-4">
                             <Card className="shadow-sm border-0 expo-card h-100">
-                                <Card.Body className="d-flex flex-column">
-                                    <div className="d-flex justify-content-between">
-                                        <h5 className="fw-bold text-dark">{expo.name}</h5>
-                                        <Badge bg="secondary">{expo.location}</Badge>
+                                {/* Expo Image */}
+                                <div className="expo-card-image-wrapper">
+                                    <Card.Img 
+                                        variant="top" 
+                                        src={expo.image || defaultExpoImage} 
+                                        alt={expo.name}
+                                        className="expo-card-image"
+                                        onError={(e) => {
+                                            e.target.src = defaultExpoImage;
+                                        }}
+                                    />
+                                    <div className="expo-card-overlay">
+                                        <Badge bg="primary">{expo.location}</Badge>
                                     </div>
+                                </div>
+                                <Card.Body className="d-flex flex-column">
+                                    <h5 className="fw-bold text-dark">{expo.name}</h5>
                                     <p className="text-muted mt-2 small">{expo.description}</p>
                                     <p className="text-muted small mb-1">
                                         <i className="bi bi-calendar-event me-2"></i>
@@ -213,8 +300,30 @@ const ManageExpos = () => {
                 </div>
 
                 {/* Add/Edit Modals */}
-                <ExpoModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={handleAddExpo} saving={saving} formData={formData} handleChange={handleChange} title="Add New Expo" />
-                <ExpoModal show={showEditModal} onHide={() => setShowEditModal(false)} onSubmit={handleUpdateExpo} saving={saving} formData={formData} handleChange={handleChange} title="Edit Expo" />
+                <ExpoModal 
+                    show={showAddModal} 
+                    onHide={closeAddModal} 
+                    onSubmit={handleAddExpo} 
+                    saving={saving} 
+                    formData={formData} 
+                    handleChange={handleChange}
+                    handleImageUpload={handleImageUpload}
+                    handleRemoveImage={handleRemoveImage}
+                    uploading={uploading}
+                    title="Add New Expo" 
+                />
+                <ExpoModal 
+                    show={showEditModal} 
+                    onHide={closeEditModal} 
+                    onSubmit={handleUpdateExpo} 
+                    saving={saving} 
+                    formData={formData} 
+                    handleChange={handleChange}
+                    handleImageUpload={handleImageUpload}
+                    handleRemoveImage={handleRemoveImage}
+                    uploading={uploading}
+                    title="Edit Expo" 
+                />
 
                 {/* Delete Confirmation Modal */}
                 <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
@@ -235,77 +344,202 @@ const ManageExpos = () => {
 
             {/* Styles */}
             <style>{`
-        .card {
-          border-radius: 14px;
-          transition: all 0.25s ease;
-        }
-        .card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        }
-        .btn {
-          border-radius: 8px;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        
-        .grid-wrapper {
-        min-height: 100%;
-        width: 100%;
-        position: relative;
-        z-index: 0;
-        }
+                .card {
+                    border-radius: 14px;
+                    transition: all 0.25s ease;
+                    overflow: hidden;
+                }
+                .card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+                }
+                .btn {
+                    border-radius: 8px;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                }
 
-        .grid-background {
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 0;
-        background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
-            linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
-        background-size: 40px 60px;
-        -webkit-mask-image: radial-gradient(
-            ellipse 70% 60% at 50% 30%,
-            #000 60%,
-            transparent 100%
-        );
-        mask-image: radial-gradient(
-            ellipse 70% 60% at 50% 30%,
-            #000 60%,
-            transparent 100%
-        );
-        }
-      `}</style>
+                .expo-card-image-wrapper {
+                    position: relative;
+                    height: 180px;
+                    overflow: hidden;
+                }
+
+                .expo-card-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+
+                .expo-card:hover .expo-card-image {
+                    transform: scale(1.05);
+                }
+
+                .expo-card-overlay {
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                }
+
+                .image-upload-wrapper {
+                    border: 2px dashed #dee2e6;
+                    border-radius: 12px;
+                    padding: 20px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background: #f8f9fa;
+                }
+
+                .image-upload-wrapper:hover {
+                    border-color: #1099a8;
+                    background: rgba(16, 153, 168, 0.05);
+                }
+
+                .image-preview-wrapper {
+                    position: relative;
+                    border-radius: 12px;
+                    overflow: hidden;
+                }
+
+                .image-preview {
+                    width: 100%;
+                    max-height: 200px;
+                    object-fit: cover;
+                    border-radius: 12px;
+                }
+
+                .image-remove-btn {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                }
+                
+                .grid-wrapper {
+                    min-height: 100%;
+                    width: 100%;
+                    position: relative;
+                    z-index: 0;
+                }
+
+                .grid-background {
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    left: 0;
+                    z-index: 0;
+                    background-image: linear-gradient(to right, #e2e8f08e 1px, transparent 1px),
+                        linear-gradient(to bottom, #e2e8f08e 1px, transparent 1px);
+                    background-size: 40px 60px;
+                    -webkit-mask-image: radial-gradient(
+                        ellipse 70% 60% at 50% 30%,
+                        #000 60%,
+                        transparent 100%
+                    );
+                    mask-image: radial-gradient(
+                        ellipse 70% 60% at 50% 30%,
+                        #000 60%,
+                        transparent 100%
+                    );
+                }
+            `}</style>
         </div>
     );
 };
 
-// Separate modal component
-const ExpoModal = ({ show, onHide, onSubmit, saving, formData, handleChange, title }) => (
-    <Modal show={show} onHide={onHide} centered>
+// Separate modal component with image upload
+const ExpoModal = ({ 
+    show, 
+    onHide, 
+    onSubmit, 
+    saving, 
+    formData, 
+    handleChange, 
+    handleImageUpload, 
+    handleRemoveImage, 
+    uploading, 
+    title 
+}) => (
+    <Modal show={show} onHide={onHide} centered size="lg">
         <Modal.Header closeButton>
             <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
             <Form onSubmit={onSubmit}>
-                <Form.Group className="mb-2">
-                    <Form.Label>Expo Name</Form.Label>
-                    <Form.Control name="name" required value={formData.name} onChange={handleChange} />
+                {/* Image Upload Section */}
+                <Form.Group className="mb-3">
+                    <Form.Label>Expo Image</Form.Label>
+                    {formData.image ? (
+                        <div className="image-preview-wrapper">
+                            <img 
+                                src={formData.image} 
+                                alt="Expo preview" 
+                                className="image-preview"
+                            />
+                            <Button 
+                                variant="danger" 
+                                size="sm" 
+                                className="image-remove-btn"
+                                onClick={handleRemoveImage}
+                                disabled={uploading}
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="image-upload-wrapper">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                style={{ display: 'none' }}
+                                id="expo-image-upload"
+                                disabled={uploading}
+                            />
+                            <label htmlFor="expo-image-upload" style={{ cursor: 'pointer', margin: 0 }}>
+                                {uploading ? (
+                                    <div>
+                                        <Spinner animation="border" size="sm" className="me-2" />
+                                        Uploading...
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <FaCloudUploadAlt size={40} className="text-muted mb-2" />
+                                        <p className="text-muted mb-0">Click to upload image</p>
+                                        <small className="text-muted">JPEG, PNG, WebP or GIF (Max 5MB)</small>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                    )}
                 </Form.Group>
+
+                <Row>
+                    <Col md={6}>
+                        <Form.Group className="mb-2">
+                            <Form.Label>Expo Name</Form.Label>
+                            <Form.Control name="name" required value={formData.name} onChange={handleChange} />
+                        </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group className="mb-2">
+                            <Form.Label>Location</Form.Label>
+                            <Form.Control name="location" required value={formData.location} onChange={handleChange} />
+                        </Form.Group>
+                    </Col>
+                </Row>
+
                 <Form.Group className="mb-2">
                     <Form.Label>Description</Form.Label>
-                    <Form.Control as="textarea" name="description" required value={formData.description} onChange={handleChange} />
+                    <Form.Control as="textarea" name="description" required value={formData.description} onChange={handleChange} rows={3} />
                 </Form.Group>
-                <Form.Group className="mb-2">
-                    <Form.Label>Location</Form.Label>
-                    <Form.Control name="location" required value={formData.location} onChange={handleChange} />
-                </Form.Group>
+
                 <Form.Group className="mb-2">
                     <Form.Label>Date</Form.Label>
                     <Form.Control type="date" name="date" required value={formData.date} onChange={handleChange} />
                 </Form.Group>
+
                 <Row>
                     <Col>
                         <Form.Group className="mb-2">
@@ -320,9 +554,12 @@ const ExpoModal = ({ show, onHide, onSubmit, saving, formData, handleChange, tit
                         </Form.Group>
                     </Col>
                 </Row>
+
                 <div className="text-end mt-3">
                     <Button variant="secondary" className="me-2" onClick={onHide}>Cancel</Button>
-                    <Button type="submit" variant="primary" disabled={saving}>{saving ? <Spinner animation="border" size="sm" /> : "Save"}</Button>
+                    <Button type="submit" variant="primary" disabled={saving || uploading}>
+                        {saving ? <Spinner animation="border" size="sm" /> : "Save"}
+                    </Button>
                 </div>
             </Form>
         </Modal.Body>

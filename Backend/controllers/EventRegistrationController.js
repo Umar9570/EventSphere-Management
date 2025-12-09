@@ -259,13 +259,134 @@ const EventRegistrationController = {
 
             // Find registration by QR code
             const registration = await EventRegistration.findOne({ qrCode })
-                .populate('user', 'firstName lastName email')
-                .populate('expo', 'name date startTime endTime location');
+                .populate('user', 'firstName lastName email phone')
+                .populate('expo', 'name date startTime endTime location description');
 
             if (!registration) {
                 return res.status(404).json({
                     status: false,
-                    message: "Invalid QR code"
+                    message: "Invalid QR code. Registration not found.",
+                    type: "invalid"
+                });
+            }
+
+            const expo = registration.expo;
+            const user = registration.user;
+
+            if (!expo || !user) {
+                return res.status(404).json({
+                    status: false,
+                    message: "Expo or user data not found",
+                    type: "error"
+                });
+            }
+
+            // Get current date and time
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const expoDate = new Date(expo.date);
+            const expoDateOnly = new Date(expoDate.getFullYear(), expoDate.getMonth(), expoDate.getDate());
+
+            // Parse expo times
+            const [startHour, startMinute] = expo.startTime.split(':').map(Number);
+            const [endHour, endMinute] = expo.endTime.split(':').map(Number);
+
+            const expoStart = new Date(expoDateOnly);
+            expoStart.setHours(startHour, startMinute, 0, 0);
+
+            const expoEnd = new Date(expoDateOnly);
+            expoEnd.setHours(endHour, endMinute, 0, 0);
+
+            // Format time helper
+            const formatTime = (time) => {
+                if (!time) return "";
+                const [hours, minutes] = time.split(":");
+                const hour = parseInt(hours);
+                const ampm = hour >= 12 ? "PM" : "AM";
+                const formattedHour = hour % 12 || 12;
+                return `${formattedHour}:${minutes} ${ampm}`;
+            };
+
+            // Format date helper
+            const formatDate = (date) => {
+                return new Date(date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+
+            // Prepare user and expo info for response
+            const userInfo = {
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                phone: user.phone || 'N/A'
+            };
+
+            const expoInfo = {
+                name: expo.name,
+                location: expo.location,
+                date: formatDate(expo.date),
+                time: `${formatTime(expo.startTime)} - ${formatTime(expo.endTime)}`,
+                description: expo.description || ''
+            };
+
+            // Check if expo date is in the past
+            if (today > expoDateOnly) {
+                return res.json({
+                    status: false,
+                    message: "This expo has already ended.",
+                    type: "ended",
+                    userInfo,
+                    expoInfo,
+                    attendedAt: registration.attendedAt,
+                    alreadyAttended: registration.attended
+                });
+            }
+
+            // Check if expo date is in the future
+            if (today < expoDateOnly) {
+                const daysUntil = Math.ceil((expoDateOnly - today) / (1000 * 60 * 60 * 24));
+                return res.json({
+                    status: false,
+                    message: `This expo hasn't started yet. It starts in ${daysUntil} day${daysUntil > 1 ? 's' : ''}.`,
+                    type: "future",
+                    userInfo,
+                    expoInfo,
+                    daysUntil
+                });
+            }
+
+            // Expo is today - check time
+            const currentTime = now.getTime();
+            const startTime = expoStart.getTime();
+            const endTime = expoEnd.getTime();
+
+            // Check if user is too early (more than 30 minutes before start)
+            const earlyBuffer = 30 * 60 * 1000; // 30 minutes in milliseconds
+            if (currentTime < startTime - earlyBuffer) {
+                const minutesUntilStart = Math.ceil((startTime - currentTime) / (1000 * 60));
+                return res.json({
+                    status: false,
+                    message: `You're too early! The expo starts in ${minutesUntilStart} minutes.`,
+                    type: "early",
+                    userInfo,
+                    expoInfo,
+                    minutesUntilStart
+                });
+            }
+
+            // Check if expo has ended
+            if (currentTime > endTime) {
+                return res.json({
+                    status: false,
+                    message: "The expo has ended for today.",
+                    type: "ended",
+                    userInfo,
+                    expoInfo,
+                    attendedAt: registration.attendedAt,
+                    alreadyAttended: registration.attended
                 });
             }
 
@@ -273,32 +394,40 @@ const EventRegistrationController = {
             if (registration.attended) {
                 return res.json({
                     status: true,
-                    message: "Attendance already marked",
+                    message: "Attendance was already marked for this expo.",
+                    type: "already_attended",
+                    userInfo,
+                    expoInfo,
                     attendedAt: registration.attendedAt,
-                    registration
+                    alreadyAttended: true
                 });
             }
 
-            // Mark as attended
+            // All checks passed - Mark attendance
             registration.attended = true;
-            registration.attendedAt = new Date();
+            registration.attendedAt = now;
             await registration.save();
 
             // Update user status
-            await User.findByIdAndUpdate(registration.user._id, {
+            await User.findByIdAndUpdate(user._id, {
                 status: 'Attended'
             });
 
             res.json({
                 status: true,
-                message: "Attendance marked successfully",
-                registration
+                message: "Attendance marked successfully! Welcome to the expo.",
+                type: "success",
+                userInfo,
+                expoInfo,
+                attendedAt: now,
+                alreadyAttended: false
             });
         } catch (err) {
             console.error("Mark attendance error:", err);
             res.status(500).json({
                 status: false,
-                message: "Server error"
+                message: "Server error. Please try again.",
+                type: "error"
             });
         }
     },

@@ -5,7 +5,7 @@ const EventRegistrationController = require('../controllers/EventRegistrationCon
 // Register for event
 router.post('/register', EventRegistrationController.registerForEvent);
 
-// Mark attendance
+// Mark attendance via QR code
 router.post('/mark-attendance', EventRegistrationController.markAttendance);
 
 // Get user registrations

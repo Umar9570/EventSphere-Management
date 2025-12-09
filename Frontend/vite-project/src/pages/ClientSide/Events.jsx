@@ -21,6 +21,9 @@ const Events = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
 
+  // Default expo image
+  const defaultExpoImage = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop";
+
   // Format time for display (e.g., "09:00" -> "9:00 AM")
   const formatTime = (time) => {
     if (!time) return "";
@@ -150,7 +153,7 @@ const Events = () => {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="text-muted mt-3">Loading events...</p>
+        <p className="text-light mt-3">Loading events...</p>
       </div>
     );
   }
@@ -172,8 +175,8 @@ const Events = () => {
 
               {/* Search Box */}
               <div className="glass-card p-4">
-                <Row className="justify-content-between g-3">
-                  <Col md={8}>
+                <Row className="justify-content-center">
+                  <Col md={10}>
                     <InputGroup className="glass-input-group">
                       <InputGroup.Text className="glass-input-icon">
                         <FaSearch />
@@ -186,12 +189,6 @@ const Events = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </InputGroup>
-                  </Col>
-                  <Col md={4}>
-                    <Button className="btn-glow w-100 h-100">
-                      <FaSearch className="me-2" />
-                      Search
-                    </Button>
                   </Col>
                 </Row>
               </div>
@@ -231,7 +228,15 @@ const Events = () => {
                   <Col lg={4} md={6} key={expo._id}>
                     <div className="glass-card event-card h-100">
                       <div className="event-card-image">
-                        <span className="event-card-emoji">🎪</span>
+                        <img 
+                          src={expo.image || defaultExpoImage} 
+                          alt={expo.name}
+                          className="event-card-img"
+                          onError={(e) => {
+                            e.target.src = defaultExpoImage;
+                          }}
+                        />
+                        <div className="event-card-image-overlay"></div>
                         <div className="event-date-badge glass-card-strong">
                           <div className="event-date-day">{getDay(expo.date)}</div>
                           <div className="event-date-month">{getMonthAbbr(expo.date)}</div>
@@ -239,7 +244,7 @@ const Events = () => {
                       </div>
                       <div className="event-card-content">
                         {isPast ? (
-                          <span className="event-category-badge" style={{ backgroundColor: '#6c757d' }}>
+                          <span className="event-category-badge" style={{ backgroundColor: '#6c757d9c' }}>
                             Past Event
                           </span>
                         ) : isRegistered ? (
@@ -289,7 +294,7 @@ const Events = () => {
                         )}
                         {isPast && (
                           <div className="text-center py-2">
-                            <small className="text-muted">This event has ended</small>
+                            <small className="text-light">This event has ended</small>
                           </div>
                         )}
                       </div>
@@ -366,6 +371,36 @@ const Events = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Additional Styles for Image */}
+      <style>{`
+        .event-card-image {
+          position: relative;
+          height: 180px;
+          overflow: hidden;
+        }
+
+        .event-card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .event-card:hover .event-card-img {
+          transform: scale(1.05);
+        }
+
+        .event-card-image-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 };

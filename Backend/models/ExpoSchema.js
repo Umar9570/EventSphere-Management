@@ -5,6 +5,7 @@ const expoSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String },
     location: { type: String, required: true },
+    image: { type: String, default: "" }, // URL from cloud storage
 
     date: { type: Date, required: true },
     startTime: { type: String, required: true },
